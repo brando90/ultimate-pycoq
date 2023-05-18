@@ -14,8 +14,8 @@ from typing import Iterable
 import aiofile 
 
 
-import pycoq.common
-import pycoq.kernel
+import serapi_pycoq.common
+import serapi_pycoq.kernel
 
 
 
@@ -93,7 +93,7 @@ def coq_stmts_of_lines(lines: Iterable[str]) -> Iterable[str]:
         prefix = prefix + line[start:]
 
 
-def coq_stmts_of_context(coq_ctxt: pycoq.common.CoqContext) -> Iterable[str]:
+def coq_stmts_of_context(coq_ctxt: serapi_pycoq.common.CoqContext) -> Iterable[str]:
     '''
     [revised]
     returns generator of coq statements from a context
@@ -101,7 +101,7 @@ def coq_stmts_of_context(coq_ctxt: pycoq.common.CoqContext) -> Iterable[str]:
     source_filename = os.path.join(coq_ctxt.pwd, coq_ctxt.target)
 
     with open(source_filename, 'r') as fsource:
-        for stmt in pycoq.split.coq_stmts_of_lines(fsource.readlines()):
+        for stmt in serapi_pycoq.split.coq_stmts_of_lines(fsource.readlines()):
             yield stmt
 
 

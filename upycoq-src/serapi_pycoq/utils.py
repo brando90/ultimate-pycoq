@@ -2,8 +2,8 @@ import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from pycoq.common import CoqContext, LocalKernelConfig
-from pycoq.serapi import CoqSerapi
+from serapi_pycoq.common import CoqContext, LocalKernelConfig
+from serapi_pycoq.serapi import CoqSerapi
 
 import os
 

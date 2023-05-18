@@ -24,8 +24,8 @@ import os
 import shutil
 import sys
 
-import pycoq.trace
-from pycoq.pycoq_trace_config import EXECUTABLE, REGEX, DESCRIPTION
+import serapi_pycoq.trace
+from serapi_pycoq.serapi_pycoq_trace_config import EXECUTABLE, REGEX, DESCRIPTION
 
 
 def main():
@@ -58,7 +58,7 @@ def main():
         print('Error: command is empty')
         sys.exit(-1)
 
-    pycoq.trace.strace_build(executable, args.regex, args.workdir, args.command)
+    serapi_pycoq.trace.strace_build(executable, args.regex, args.workdir, args.command)
 
 
 if __name__ == '__main__':

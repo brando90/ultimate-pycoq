@@ -1,11 +1,11 @@
 """
-pycoq methods to interact with logging module
+serapi_pycoq methods to interact with logging module
 """
 
 
 import logging
 
-import pycoq.config
+import serapi_pycoq.config
 
 # FORMATTER = '--> %(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s ----'
 # https://stackoverflow.com/questions/533048/how-to-log-source-file-name-and-line-number-in-python
@@ -24,9 +24,9 @@ def config_logging():
     """Configures python's logging module to print to stdout and logging file."""
     logging.basicConfig(
         format=FORMATTER,
-        level=logging_level(pycoq.config.get_log_level()),
+        level=logging_level(serapi_pycoq.config.get_log_level()),
         handlers=[
-            logging.FileHandler(pycoq.config.get_log_filename()),
+            logging.FileHandler(serapi_pycoq.config.get_log_filename()),
             # logging.StreamHandler()
         ]
     )

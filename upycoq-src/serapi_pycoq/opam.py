@@ -12,13 +12,13 @@ import subprocess
 import os
 import asyncio
 
-import pycoq.config
-import pycoq.pycoq_trace_config
-import pycoq.trace
-import pycoq.log
-import pycoq.split
-import pycoq.serapi
-import pycoq.query_goals
+import serapi_pycoq.config
+import serapi_pycoq.pycoq_trace_config
+import serapi_pycoq.trace
+import serapi_pycoq.log
+import serapi_pycoq.split
+import serapi_pycoq.serapi
+import serapi_pycoq.query_goals
 
 # import serlib.parser
 
@@ -28,8 +28,8 @@ from pdb import set_trace as st
 
 # refactor globals below to be loaded from a default config
 # see e.g. https://tech.preferred.jp/en/blog/working-with-configuration-in-python/
-from pycoq.common import LocalKernelConfig
-from pycoq.project_splits import CoqProj
+from serapi_pycoq.common import LocalKernelConfig
+from serapi_pycoq.project_splits import CoqProj
 
 MIN_OPAM_VERSION = "2."
 DEFAULT_OCAML = "ocaml-variants.4.07.1+flambda"
@@ -78,7 +78,7 @@ def opam_check() -> bool:
 
 def root_option() -> List[str]:
     ''' constructs root option arg to call opam '''
-    root = pycoq.config.get_opam_root()
+    root = serapi_pycoq.config.get_opam_root()
     return ['--root', root] if not root is None else []
 
 
@@ -364,7 +364,7 @@ def opam_strace_build(coq_package: str,
                       coq_serapi=COQ_SERAPI,
                       coq_serapi_pin=COQ_SERAPI_PIN,
                       compiler=DEFAULT_OCAML) -> List[str]:
-    ''' returns a list of pycoq context files
+    ''' returns a list of serapi_pycoq context files
     after opam build of a package; monitoring calls
     with strace
 
@@ -388,10 +388,10 @@ def opam_strace_build(coq_package: str,
 
     executable = opam_executable('coqc', switch)
     if executable is None:
-        pycoq.log.critical("coqc executable is not found in {switch}")
+        serapi_pycoq.log.critical("coqc executable is not found in {switch}")
         return []
 
-    regex = pycoq.pycoq_trace_config.REGEX
+    regex = serapi_pycoq.pycoq_trace_config.REGEX
 
     workdir = None
 
@@ -402,10 +402,10 @@ def opam_strace_build(coq_package: str,
                + ['--keep-build-dir']
                + [coq_package])
 
-    pycoq.log.info(f"{executable}, {regex}, {workdir}, {command}")
+    serapi_pycoq.log.info(f"{executable}, {regex}, {workdir}, {command}")
 
-    strace_logdir = pycoq.config.strace_logdir()
-    return pycoq.trace.strace_build(executable, regex, workdir, command, strace_logdir)
+    strace_logdir = serapi_pycoq.config.strace_logdir()
+    return serapi_pycoq.trace.strace_build(executable, regex, workdir, command, strace_logdir)
 
 
 def opam_strace_command(command: List[str],
@@ -417,7 +417,7 @@ def opam_strace_command(command: List[str],
     '''
 
     switch = opam_switch_name(compiler, coq_serapi, coq_serapi_pin)
-    root = pycoq.config.get_opam_root()
+    root = serapi_pycoq.config.get_opam_root()
     if root is None:
         root = opam_default_root()
 
@@ -430,14 +430,14 @@ def opam_strace_command(command: List[str],
         logging.critical("coqc executable is not found")
         return []
 
-    regex = pycoq.pycoq_trace_config.REGEX
+    regex = serapi_pycoq.pycoq_trace_config.REGEX
 
     logging.info(f"{executable}, {regex}, {workdir}, {command}")
 
-    return pycoq.trace.strace_build(executable, regex, workdir, command)
+    return serapi_pycoq.trace.strace_build(executable, regex, workdir, command)
 
 
-def opam_coqtop(coq_ctxt: pycoq.common.CoqContext,
+def opam_coqtop(coq_ctxt: serapi_pycoq.common.CoqContext,
                 coq_serapi=COQ_SERAPI,
                 coq_serapi_pin=COQ_SERAPI_PIN,
                 compiler=DEFAULT_OCAML) -> int:
@@ -445,7 +445,7 @@ def opam_coqtop(coq_ctxt: pycoq.common.CoqContext,
     runs coqtop with a given pycoq_context
     returns error code of coqtop with Coqtop Exit on Error flag
     '''
-    iqr_args = pycoq.common.coqc_args(coq_ctxt.IQR())
+    iqr_args = serapi_pycoq.common.coqc_args(coq_ctxt.IQR())
     switch = opam_switch_name(compiler, coq_serapi, coq_serapi_pin)
 
     command = (['opam', 'exec']
@@ -471,7 +471,7 @@ def opam_coqtop(coq_ctxt: pycoq.common.CoqContext,
         return error.returncode
 
 
-async def opam_coqtop_stmts(coq_ctxt: pycoq.common.CoqContext,
+async def opam_coqtop_stmts(coq_ctxt: serapi_pycoq.common.CoqContext,
                             coq_serapi=COQ_SERAPI,
                             coq_serapi_pin=COQ_SERAPI_PIN,
                             compiler=DEFAULT_OCAML) -> List[str]:
@@ -483,7 +483,7 @@ async def opam_coqtop_stmts(coq_ctxt: pycoq.common.CoqContext,
     '''
     print("entered opam_coqtop_stmts")
 
-    iqr_args = pycoq.common.coqc_args(coq_ctxt.IQR())
+    iqr_args = serapi_pycoq.common.coqc_args(coq_ctxt.IQR())
     switch = opam_switch_name(compiler, coq_serapi, coq_serapi_pin)
     command = (['opam', 'exec']
                + root_option()
@@ -505,7 +505,7 @@ async def opam_coqtop_stmts(coq_ctxt: pycoq.common.CoqContext,
         cwd=coq_ctxt.pwd)
     print(f"proc {proc} is created")
 
-    for stmt in pycoq.split.coq_stmts_of_context(coq_ctxt):
+    for stmt in serapi_pycoq.split.coq_stmts_of_context(coq_ctxt):
         print(f"writing {stmt}")
         proc.stdin.write(stmt.encode())
         print("waiting for drain")
@@ -526,18 +526,18 @@ async def opam_coqtop_stmts(coq_ctxt: pycoq.common.CoqContext,
 
 
 # legacy, I don't recommend using it, has switch hardcoded!?
-def opam_serapi_cfg(coq_ctxt: pycoq.common.CoqContext = None,
+def opam_serapi_cfg(coq_ctxt: serapi_pycoq.common.CoqContext = None,
                     coq_serapi=COQ_SERAPI,
                     coq_serapi_pin=COQ_SERAPI_PIN,
                     compiler=DEFAULT_OCAML,
                     debug=False) -> LocalKernelConfig:
     ''' returns serapi cfg from coq_ctxt '''
     if coq_ctxt == None:
-        coq_ctxt = pycoq.common.CoqContext(pwd=os.getcwd(),
+        coq_ctxt = serapi_pycoq.common.CoqContext(pwd=os.getcwd(),
                                            executable='',
                                            target='default_shell')
 
-    iqr_args = pycoq.common.serapi_args(coq_ctxt.IQR())
+    iqr_args = serapi_pycoq.common.serapi_args(coq_ctxt.IQR())
     # switch = opam_switch_name(compiler, coq_serapi, coq_serapi_pin)  # likely bad line
     switch = coq_ctxt.get_switch_name()
     debug_option = ['--debug'] if debug else []
@@ -550,16 +550,16 @@ def opam_serapi_cfg(coq_ctxt: pycoq.common.CoqContext = None,
                + ['--topfile', coq_ctxt.target]
                + debug_option)
 
-    return pycoq.common.LocalKernelConfig(command=command,
+    return serapi_pycoq.common.LocalKernelConfig(command=command,
                                           env=None,
                                           pwd=coq_ctxt.pwd)
 
 
-def get_opam_serapi_cfg_for_coq_ctxt(coq_ctxt: pycoq.common.CoqContext,
+def get_opam_serapi_cfg_for_coq_ctxt(coq_ctxt: serapi_pycoq.common.CoqContext,
                                      debug=False,
                                      ) -> LocalKernelConfig:
     """  Returns serapi cfg from coq_ctxt """
-    iqr_args = pycoq.common.serapi_args(coq_ctxt.IQR())
+    iqr_args = serapi_pycoq.common.serapi_args(coq_ctxt.IQR())
     switch: str = coq_ctxt.get_switch_name()
     debug_option = ['--debug'] if debug else []
 
@@ -572,8 +572,8 @@ def get_opam_serapi_cfg_for_coq_ctxt(coq_ctxt: pycoq.common.CoqContext,
                + ['--topfile', coq_ctxt.target]
                + debug_option)
 
-    # return pycoq.common.LocalKernelConfig(command=command, env=None,  pwd=coq_ctxt.pwd)
-    return pycoq.common.LocalKernelConfig(command=command, env=coq_ctxt.env,  pwd=coq_ctxt.pwd)
+    # return serapi_pycoq.common.LocalKernelConfig(command=command, env=None,  pwd=coq_ctxt.pwd)
+    return serapi_pycoq.common.LocalKernelConfig(command=command, env=coq_ctxt.env,  pwd=coq_ctxt.pwd)
 
 
 def log_query_goals_error(_serapi_goals, serapi_goals, serapi_goals_legacy):
@@ -611,7 +611,7 @@ def _strace_build_with_opam_and_get_filenames_legacy(coq_proj: str,
         logging.critical(f"coqc executable is not found in {switch}")
         return []
 
-    regex = pycoq.pycoq_trace_config.REGEX
+    regex = serapi_pycoq.pycoq_trace_config.REGEX
 
     workdir = None
 
@@ -625,8 +625,8 @@ def _strace_build_with_opam_and_get_filenames_legacy(coq_proj: str,
     logging.info(f"{executable}, {regex}, {workdir}, {command}")
     logging.info(f"{executable}, {regex}, {workdir}, {' '.join(command)}")
 
-    strace_logdir = pycoq.config.get_strace_logdir()
-    return pycoq.trace.strace_build(executable, regex, workdir, command, strace_logdir)
+    strace_logdir = serapi_pycoq.config.get_strace_logdir()
+    return serapi_pycoq.trace.strace_build(executable, regex, workdir, command, strace_logdir)
 
 
 def opam_list():
@@ -726,7 +726,7 @@ def strace_build_coq_project_and_get_filenames(coq_proj: CoqProj,
     logging.info(f'active_switch: {get_active_opam_switch_by_running_opam_switch_in_python_subprocess()}')
 
     # - keep building & strace-ing until coq proj/pkg succeeds -- we'll know since the filenames list is not empty.
-    regex: str = pycoq.pycoq_trace_config.REGEX if regex_to_get_filenames is None else regex_to_get_filenames
+    regex: str = serapi_pycoq.pycoq_trace_config.REGEX if regex_to_get_filenames is None else regex_to_get_filenames
     workdir = coq_project_path
     filenames: list[str] = []  # coq-proj/pkg filenames pycoq context
     logging.info(f'{filenames=}')
@@ -769,7 +769,7 @@ def strace_build_with_build_command(switch: str,
     logging.info(f'{executable=}')
 
     # - build coq-proj
-    strace_logdir = pycoq.config.get_strace_logdir()
+    strace_logdir = serapi_pycoq.config.get_strace_logdir()
     build_command: str = 'make' if build_command == '' or build_command is None else build_command
     build_commands: list[str] = build_command.split('&&')
     build_commands: list[str] = ['make clean'] + build_commands if make_clean_coq_proj else build_commands
@@ -777,7 +777,7 @@ def strace_build_with_build_command(switch: str,
     for build_cmd in build_commands:
         build_cmd: str = f'opam exec --switch {switch} -- {build_cmd}'
         logging.info(f"{executable}, {regex}, {workdir}, {build_cmd} {strace_logdir}")
-        result: list[str] = pycoq.trace.strace_build(executable, regex, workdir, build_cmd, strace_logdir)
+        result: list[str] = serapi_pycoq.trace.strace_build(executable, regex, workdir, build_cmd, strace_logdir)
         filenames.extend(result)
     # - return filenames from pycoq context e.g. ['/afs/cs.stanford.edu/u/brando9/proverbot9001/coq-projects/constructive-geometry/problems.v._pycoq_context', ...,] ok if you save this it needs to go to the data set dir since it's server dependent/absolute path depedent.
     return filenames

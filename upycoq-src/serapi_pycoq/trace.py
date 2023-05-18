@@ -15,9 +15,9 @@ from dataclasses import dataclass, field
 # from strace_parser.json_transformer import to_json
 from strace_parser.parser import get_parser
 
-from pycoq.common import CoqContext, context_fname, dump_context
+from serapi_pycoq.common import CoqContext, context_fname, dump_context
 
-# import pycoq.log
+# import serapi_pycoq.log
 import logging
 
 from pdb import set_trace as st
@@ -43,7 +43,7 @@ def dehex_str(s):
             temp = 'b' + s
             return ast.literal_eval(temp).decode('utf8')
         except Exception as exc:
-            print("pycoq: ERROR DECODING", temp)
+            print("serapi_pycoq: ERROR DECODING", temp)
             raise exc
     else:
         return s
@@ -190,10 +190,10 @@ def strace_build(executable: str,
 
     def _strace_build(executable, regex, workdir, command, logdir):
         logfname = os.path.join(logdir, 'strace.log')
-        logging.info(f"pycoq: tracing {executable} accesing {regex} while "
+        logging.info(f"serapi_pycoq: tracing {executable} accesing {regex} while "
                      f"executing {command} from {workdir} with "
                      f"curdir {os.getcwd()}")
-        # print(f"pycoq: tracing {executable} accesing {regex} while "
+        # print(f"serapi_pycoq: tracing {executable} accesing {regex} while "
         #       f"executing {command} from {workdir} with "
         #       f"curdir {os.getcwd()}")
         # os.chdir(coq_project_path)

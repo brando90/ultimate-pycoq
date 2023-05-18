@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Union, Optional
 
-from pycoq.utils import clean_up_filename
+from serapi_pycoq.utils import clean_up_filename
 from uutils import load_json, merge_two_dicts
 
 

@@ -9,9 +9,9 @@ import time
 
 from typing import List, Union, Tuple, Optional
 
-import pycoq.kernel
-from pycoq.kernel import LocalKernel
-from pycoq.common import LocalKernelConfig
+import serapi_pycoq.kernel
+from serapi_pycoq.kernel import LocalKernel
+from serapi_pycoq.common import LocalKernelConfig
 
 from dataclasses import dataclass
 from collections.abc import Iterable
@@ -25,7 +25,7 @@ ADDED_PATTERN = re.compile(r"\(Added\s(\d+)(.*)\)")
 COQEXN_PATTERN = re.compile(r"\((CoqExn\(.*\))\)")
 
 
-# from pycoq.query_goals import SerapiGoals
+# from serapi_pycoq.query_goals import SerapiGoals
 
 
 def ocaml_string_quote(s: str):
@@ -47,7 +47,7 @@ def sexp(x) -> str:
         return '(' + " ".join(sexp(e) for e in x) + ')'
     else:
         return str(x)
-        # raise TypeError(f'pycoq.serapi.sexp for type {type(x)} is not yet implemented')
+        # raise TypeError(f'serapi_pycoq.serapi.sexp for type {type(x)} is not yet implemented')
 
 
 def matches_answer_completed(line: str, ind: int):
@@ -106,7 +106,7 @@ class CoqSerapi():
         kernel.readlines()
         kernel.writeline()
         
-    of config defined by the protocol: pycoq.kernel.LocalKernel
+    of config defined by the protocol: serapi_pycoq.kernel.LocalKernel
 
     """
 
@@ -115,7 +115,7 @@ class CoqSerapi():
         wraps coq-serapi interface on the running kernel object
         """
         self._logfname = logfname  # seems to log to responses from coq serapi to ._serapi_log logfile (not sure why)
-        self._kernel: pycoq.kernel.LocalKernel = kernel  # object that can start the background coq-serapi process
+        self._kernel: serapi_pycoq.kernel.LocalKernel = kernel  # object that can start the background coq-serapi process
         self._cfg: LocalKernelConfig = self._kernel.cfg  # config of the (coq serapi) kernel (which runs the serapi)
 
         # serapi command history for this CoqSerapi object/instance
@@ -281,8 +281,8 @@ class CoqSerapi():
         serapi_goals: List[str] = await self._query_goals_completed(opts)
 
         if len(serapi_goals) != 1:
-            print("pycoq received list of goals", serapi_goals)
-            raise RuntimeError("unexpected behaviour of pycoq - serapi - coq API: "
+            print("serapi_pycoq received list of goals", serapi_goals)
+            raise RuntimeError("unexpected behaviour of serapi_pycoq - serapi - coq API: "
                                "query goals returned a list of len != 1 in serapi response")
         else:
             return serapi_goals[0]
@@ -299,7 +299,7 @@ class CoqSerapi():
     #     ann = serlib.cparser.annotate(post_fix)
     #     ret_serapi_goals: SerapiGoals = pycoq.query_goals.parse_serapi_goals(self.parser, post_fix, ann, pycoq.query_goals.SExpr)
     #     return ret_serapi_goals
-    # return pycoq.query_goals.parse_serapi_goals(self.parser, post_fix, ann, pycoq.query_goals.SExpr)
+    # return serapi_pycoq.query_goals.parse_serapi_goals(self.parser, post_fix, ann, pycoq.query_goals.SExpr)
 
     async def query_local_ctx_and_goals(self) -> Union[str, list]:
         """

@@ -3,10 +3,10 @@ import dataclasses
 import time
 from typing import Union
 
-from pycoq.common import LocalKernelConfig, RemoteKernelConfig
-from pycoq.common import TIMEOUT_TERMINATE
+from serapi_pycoq.common import LocalKernelConfig, RemoteKernelConfig
+from serapi_pycoq.common import TIMEOUT_TERMINATE
 
-# import pycoq.log
+# import serapi_pycoq.log
 import logging
 
 KernelConfig = Union[LocalKernelConfig, RemoteKernelConfig]
