@@ -1,5 +1,4 @@
 """
-
 A data set is made from a collection (list) of coq projs/pkgs.
 Each of these coq projs/pkgs has split for their coq .v files.
 An example split (see: ~proverbot9001/coqgym_projs_splits.json or ~/iit-term-synthesis/lf_projs_splits.json):
@@ -105,8 +104,8 @@ def list_dict_splits_2_list_splits(coq_projs: list[dict], path_2_coq_projs: Path
 # -- get the config file/meta-data for the coq projects as a Coq Projs object
 
 def get_lf_coq_projs() -> CoqProjs:
-    path_2_coq_projs: Path = Path('~/pycoq/debug_proj_pycoq_lf/').expanduser()
-    path_2_coq_projs_json_splits: Path = Path('~/pycoq/lf_projs_splits.json').expanduser()
+    path_2_coq_projs: Path = Path('~/ultimate-pycoq/coq-projects/coq-projects-basic-lf/').expanduser()
+    path_2_coq_projs_json_splits: Path = Path('~/ultimate-pycoq/data_gen_files/lf_projs_splits.json').expanduser()
     coq_projs: list[dict] = load_json(path_2_coq_projs_json_splits)
     logging.info(f'{coq_projs[0].keys()=}')
     coq_projs: list[CoqProj] = list_dict_splits_2_list_splits(coq_projs, path_2_coq_projs)
@@ -118,27 +117,14 @@ def get_lf_coq_projs() -> CoqProjs:
 
 
 def get_compcert_coq_projs() -> CoqProjs:
-    """
-    Get data set coq projs info (i.e. meta data) e.g. path2 coq-proj
-    """
-    # # note: the CompCert path sym links to the CompCert in coq_projects
-    # path_2_coq_projs: Path = Path('~/proverbot9001/coq-projects/').expanduser()
-    # path_2_coq_projs_json_splits: Path = Path('~/proverbot9001/compcert_projs_splits.json').expanduser()
-    # coq_projs: list[dict] = load_json(path_2_coq_projs_json_splits)
-    # logging.info(f'{coq_projs[0].keys()=}')
-    # coq_projs: list[CoqProj] = list_dict_splits_2_list_splits(coq_projs, path_2_coq_projs)
-    # assert len(coq_projs) == 1
-    # coq_projs: CoqProjs = CoqProjs(path_2_coq_projs=path_2_coq_projs,
-    #                                path_2_coq_projs_json_splits=path_2_coq_projs_json_splits,
-    #                                coq_projs=coq_projs)
-    # return coq_projs
+    """ Get data set coq projs info (i.e. meta data) e.g. path2 coq-proj """
     raise NotImplementedError
 
 
-def get_coqgym_coq_projs(num_current_coqgym_projs: int = 124) -> CoqProjs:
-    path_2_coq_projs: Path = Path('~/proverbot9001/coq-projects/').expanduser()
+def get_upycoq_projs(num_current_coqgym_projs: int = 124) -> CoqProjs:
+    path_2_coq_projs: Path = Path('~/ultimate-pycoq/coq-projects/coq-projects-upycoq/').expanduser()
     print(f'{path_2_coq_projs=}')
-    path_2_coq_projs_json_splits: Path = Path('~/proverbot9001/coqgym_projs_splits.json').expanduser()
+    path_2_coq_projs_json_splits: Path = Path('~/ultimate-pycoq/data_gen_files/upycoq_projs_splits.json').expanduser()
     print(f'{path_2_coq_projs_json_splits=}')
     coq_projs: list[dict] = load_json(path_2_coq_projs_json_splits)
     logging.info(f'{coq_projs[0].keys()=}')
@@ -152,10 +138,7 @@ def get_coqgym_coq_projs(num_current_coqgym_projs: int = 124) -> CoqProjs:
     return coq_projs
 
 
-# --
-
 def get_proj_splits_based_on_name_of_path2data(path2data: Union[Path, str]) -> CoqProjs:
-    # expanduser(path2data)
     name_path2data: str = str(path2data)
     if 'lf_proj' in name_path2data:
         coq_projs: CoqProjs = get_lf_coq_projs()
@@ -163,9 +146,10 @@ def get_proj_splits_based_on_name_of_path2data(path2data: Union[Path, str]) -> C
         # coq_projs: CoqProjs = get_debug_projprojs_meta_data()
         raise NotImplementedError
     elif 'compcert' in name_path2data:
-        coq_projs: CoqProjs = get_compcert_coq_projs()
-    elif 'coqgym' in name_path2data:
-        coq_projs: CoqProjs = get_coqgym_coq_projs()
+        # coq_projs: CoqProjs = get_compcert_coq_projs()
+        raise NotImplementedError
+    elif 'upycoq' in name_path2data:
+        coq_projs: CoqProjs = get_upycoq_projs()
     else:
         raise ValueError(f'Invalid type of data set/benchmark, got (invalid): {name_path2data=}')
     return coq_projs
@@ -173,17 +157,9 @@ def get_proj_splits_based_on_name_of_path2data(path2data: Union[Path, str]) -> C
 
 # - examples, tutorial, tests, etc
 
-def generate_sf_lf_from_soln_repo():
-    # create_official_makefiles_for_coq_proj_from_path_2_original_coq_repo()
-    pass
-
-
-# - run main etc
-
 if __name__ == '__main__':
     import time
 
     start = time.time()
     print(f'Start! {start=}')
-    generate_sf_lf_from_soln_repo
     print(f'Done! {time.time() - start=}')

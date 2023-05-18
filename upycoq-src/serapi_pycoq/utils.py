@@ -37,7 +37,7 @@ async def get_coq_serapi(coq_ctxt: CoqContext) -> CoqSerapi:
             async with aiofile.AIOFile(filename, 'rb') as fin:
                 coq_ctxt = pycoq.common.load_context(filename)
                 cfg = opam.opam_serapi_cfg(coq_ctxt)
-                logfname = pycoq.common.serapi_log_fname(os.path.join(coq_ctxt.pwd, coq_ctxt.target))
+                logfname = serapi_pycoq.common.serapi_log_fname(os.path.join(coq_ctxt.pwd, coq_ctxt.target))
                 async with pycoq.serapi.CoqSerapi(cfg, logfname=logfname) as coq:
     ```
     usually then you loop through the coq stmts e.g.
@@ -46,17 +46,17 @@ async def get_coq_serapi(coq_ctxt: CoqContext) -> CoqSerapi:
     ```
     """
     try:
-        import pycoq
-        from pycoq import opam
-        from pycoq.common import LocalKernelConfig
-        from pycoq.kernel import LocalKernel
+        import serapi_pycoq
+        from serapi_pycoq import opam
+        from serapi_pycoq.common import LocalKernelConfig
+        from serapi_pycoq.kernel import LocalKernel
 
         cfg: LocalKernelConfig = opam.get_opam_serapi_cfg_for_coq_ctxt(coq_ctxt)
-        logfname = pycoq.common.serapi_log_fname(os.path.join(coq_ctxt.pwd, coq_ctxt.target))
+        logfname = serapi_pycoq.common.serapi_log_fname(os.path.join(coq_ctxt.pwd, coq_ctxt.target))
         print(f'{logfname=}')
         kernel: LocalKernel = LocalKernel(cfg)
         # - needed to be returned to talk to coq
-        coq: CoqSerapi = pycoq.serapi.CoqSerapi(kernel, logfname=logfname)
+        coq: CoqSerapi = serapi_pycoq.serapi.CoqSerapi(kernel, logfname=logfname)
         await coq.__aenter__()  # calls self.start(), this  must be called by itself in the with stmt beyond yield
         yield coq
     except Exception as e:
@@ -75,74 +75,74 @@ async def get_coq_serapi(coq_ctxt: CoqContext) -> CoqSerapi:
         # coq_ctxt is just a data class so no need to close it, see: https://github.com/brando90/pycoq/blob/main/pycoq/common.py#L32
 
 
-# -
+# - test, examples, etc.
 
-async def loop_through_files_original():
-    ''' '''
-    import os
-
-    import aiofile
-
-    import pycoq
-    from pycoq import opam
-
-    coq_package = 'lf'
-    from pycoq.test.test_autoagent import with_prefix
-    coq_package_pin = f"file://{with_prefix('lf')}"
-
-    print(f'{coq_package=}')
-    print(f'{coq_package_pin=}')
-    print(f'{coq_package_pin=}')
-
-    filenames: list[str] = pycoq.opam.opam_strace_build(coq_package, coq_package_pin)
-    filename: str
-    for filename in filenames:
-        print(f'-> {filename=}')
-        async with aiofile.AIOFile(filename, 'rb') as fin:
-            coq_ctxt: CoqContext = pycoq.common.load_context(filename)
-            cfg: LocalKernelConfig = opam.opam_serapi_cfg(coq_ctxt)
-            logfname = pycoq.common.serapi_log_fname(os.path.join(coq_ctxt.pwd, coq_ctxt.target))
-            async with pycoq.serapi.CoqSerapi(cfg, logfname=logfname) as coq:
-                print(f'{coq._kernel=}')
-                for stmt in pycoq.split.coq_stmts_of_context(coq_ctxt):
-                    print(f'--> {stmt=}')
-                    _, _, coq_exc, _ = await coq.execute(stmt)
-                    if coq_exc:
-                        raise Exception(coq_exc)
-
-
-async def loop_through_files():
-    """
-    to test run in linux:
-    ```
-        python ~pycoq/pycoq/utils.py
-        python -m pdb -c continue ~/pycoq/pycoq/utils.py
-    ```
-    """
-    import pycoq
-
-    coq_package = 'lf'
-    from pycoq.test.test_autoagent import with_prefix
-    coq_package_pin = f"file://{with_prefix('lf')}"
-
-    print(f'{coq_package=}')
-    print(f'{coq_package_pin=}')
-    print(f'{coq_package_pin=}')
-
-    filenames: list[str] = pycoq.opam.opam_strace_build(coq_package, coq_package_pin)
-    filename: str
-    for filename in filenames:
-        print(f'-> {filename=}')
-        coq_ctxt: CoqContext = pycoq.common.load_context(filename)
-        async with get_coq_serapi(coq_ctxt) as coq:
-            print(f'{coq=}')
-            print(f'{coq._kernel=}')
-            stmt: str
-            for stmt in pycoq.split.coq_stmts_of_context(coq_ctxt):
-                print(f'--> {stmt=}')
-                _, _, coq_exc, _ = await coq.execute(stmt)
-                if coq_exc:
-                    raise Exception(coq_exc)
+# async def loop_through_files_original():
+#     ''' '''
+#     import os
+#
+#     import aiofile
+#
+#     import serapi_pycoq
+#     from serapi_pycoq import opam
+#
+#     coq_package = 'lf'
+#     from serapi_pycoq.test.test_autoagent import with_prefix
+#     coq_package_pin = f"file://{with_prefix('lf')}"
+#
+#     print(f'{coq_package=}')
+#     print(f'{coq_package_pin=}')
+#     print(f'{coq_package_pin=}')
+#
+#     filenames: list[str] = serapi_pycoq.opam.opam_strace_build(coq_package, coq_package_pin)
+#     filename: str
+#     for filename in filenames:
+#         print(f'-> {filename=}')
+#         async with aiofile.AIOFile(filename, 'rb') as fin:
+#             coq_ctxt: CoqContext = serapi_pycoq.common.load_context(filename)
+#             cfg: LocalKernelConfig = opam.opam_serapi_cfg(coq_ctxt)
+#             logfname = serapi_pycoq.common.serapi_log_fname(os.path.join(coq_ctxt.pwd, coq_ctxt.target))
+#             async with serapi_pycoq.serapi.CoqSerapi(cfg, logfname=logfname) as coq:
+#                 print(f'{coq._kernel=}')
+#                 for stmt in serapi_pycoq.split.coq_stmts_of_context(coq_ctxt):
+#                     print(f'--> {stmt=}')
+#                     _, _, coq_exc, _ = await coq.execute(stmt)
+#                     if coq_exc:
+#                         raise Exception(coq_exc)
+#
+#
+# async def loop_through_files():
+#     """
+#     to test run in linux:
+#     ```
+#         python ~pycoq/pycoq/utils.py
+#         python -m pdb -c continue ~/pycoq/pycoq/utils.py
+#     ```
+#     """
+#     import serapi_pycoq
+#
+#     coq_package = 'lf'
+#     from serapi_pycoq.test.test_autoagent import with_prefix
+#     coq_package_pin = f"file://{with_prefix('lf')}"
+#
+#     print(f'{coq_package=}')
+#     print(f'{coq_package_pin=}')
+#     print(f'{coq_package_pin=}')
+#
+#     filenames: list[str] = serapi_pycoq.opam.opam_strace_build(coq_package, coq_package_pin)
+#     filename: str
+#     for filename in filenames:
+#         print(f'-> {filename=}')
+#         coq_ctxt: CoqContext = serapi_pycoq.common.load_context(filename)
+#         async with get_coq_serapi(coq_ctxt) as coq:
+#             print(f'{coq=}')
+#             print(f'{coq._kernel=}')
+#             stmt: str
+#             for stmt in pycoq.split.coq_stmts_of_context(coq_ctxt):
+#                 print(f'--> {stmt=}')
+#                 _, _, coq_exc, _ = await coq.execute(stmt)
+#                 if coq_exc:
+#                     raise Exception(coq_exc)
 
 
 def clean_up_filename(filename: str, replace_dtr: str = '') -> str:
@@ -151,6 +151,6 @@ def clean_up_filename(filename: str, replace_dtr: str = '') -> str:
 
 
 if __name__ == '__main__':
-    asyncio.run(loop_through_files_original())
-    asyncio.run(loop_through_files())
+    # asyncio.run(loop_through_files_original())
+    # asyncio.run(loop_through_files())
     print('Done!\a\n')

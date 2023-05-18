@@ -1,0 +1,28 @@
+[
+    {
+        "project_name": "constructive-geometry",
+        "train_files": [
+            "problems.v",
+            "affinity.v",
+            "basis.v",
+            "orthogonality.v",
+            "part1.v",
+            "part3.v",
+            "part2.v"
+        ],
+        "test_files": [],
+        "switch": "coq-8.10"
+    },
+    {
+        "project_name": "mod-red",
+        "train_files": [],
+        "test_files": [
+            "preparation.v",
+            "unsigned.v",
+            "multired2.v",
+            "multired.v",
+            "modred.v"
+        ],
+        "switch": "coq-8.10"
+    }
+]
