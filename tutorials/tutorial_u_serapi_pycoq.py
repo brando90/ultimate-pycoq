@@ -29,12 +29,9 @@ if __name__ == '__main__':
     import time
 
     start_time = time.time()
-    # print('setup')
-    # opam_original_pycoq_pre_setup('')
-    # print('end')
     # - compile coq proj files in pycoq
     asyncio.run(example_execute_coq_files_from_coq_proj_in_pycoq('~/data/lf_proj/'))
-    # asyncio.run(example_execute_coq_files_from_coq_proj_in_pycoq('~/data/coqgym/'))
+    # asyncio.run(example_execute_coq_files_from_coq_proj_in_pycoq('~/data/upycoq/'))
 
     # - done
     duration = time.time() - start_time
