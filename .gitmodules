@@ -10,170 +10,170 @@
 [submodule "src/coq_serapy"]
 	path = coq_serapy
 	url = https://github.com/HazardousPeach/coq_serapy.git
-[submodule "coq-projects/coq-procrastination"]
-	path = coq-projects/coq-procrastination
+[submodule "coq-projects/coq-projects-upycoq/coq-procrastination"]
+	path = coq-projects/coq-projects-upycoq/coq-procrastination
 	url = https://github.com/Armael/coq-procrastination.git
-[submodule "coq-projects/hoare-tut"]
-	path = coq-projects/hoare-tut
+[submodule "coq-projects/coq-projects-upycoq/hoare-tut"]
+	path = coq-projects/coq-projects-upycoq/hoare-tut
 	url = https://github.com/coq-community/hoare-tut.git
-[submodule "coq-projects/zchinese"]
-	path = coq-projects/zchinese
+[submodule "coq-projects/coq-projects-upycoq/zchinese"]
+	path = coq-projects/coq-projects-upycoq/zchinese
 	url = https://github.com/coq-contribs/zchinese.git
-[submodule "coq-projects/euler-formula"]
-	path = coq-projects/euler-formula
+[submodule "coq-projects/coq-projects-upycoq/euler-formula"]
+	path = coq-projects/coq-projects-upycoq/euler-formula
 	url = https://github.com/coq-contribs/euler-formula.git
 	branch = v8.9
-[submodule "coq-projects/UnifySL"]
-	path = coq-projects/UnifySL
+[submodule "coq-projects/coq-projects-upycoq/UnifySL"]
+	path = coq-projects/coq-projects-upycoq/UnifySL
 	url = https://github.com/QinxiangCao/UnifySL.git
-[submodule "coq-projects/lemma-overloading"]
-	path = coq-projects/lemma-overloading
+[submodule "coq-projects/coq-projects-upycoq/lemma-overloading"]
+	path = coq-projects/coq-projects-upycoq/lemma-overloading
 	url = https://github.com/coq-community/lemma-overloading.git
-[submodule "coq-projects/disel"]
-	path = coq-projects/disel
+[submodule "coq-projects/coq-projects-upycoq/disel"]
+	path = coq-projects/coq-projects-upycoq/disel
 	url = https://github.com/DistributedComponents/disel.git
-[submodule "coq-projects/algebra"]
-	path = coq-projects/algebra
+[submodule "coq-projects/coq-projects-upycoq/algebra"]
+	path = coq-projects/coq-projects-upycoq/algebra
 	url = https://github.com/coq-contribs/algebra.git
 	branch = v8.9
-[submodule "coq-projects/pocklington"]
-	path = coq-projects/pocklington
+[submodule "coq-projects/coq-projects-upycoq/pocklington"]
+	path = coq-projects/coq-projects-upycoq/pocklington
 	url = https://github.com/coq-community/pocklington.git
-[submodule "coq-projects/quicksort-complexity"]
-	path = coq-projects/quicksort-complexity
+[submodule "coq-projects/coq-projects-upycoq/quicksort-complexity"]
+	path = coq-projects/coq-projects-upycoq/quicksort-complexity
 	url = https://github.com/HazardousPeach/quicksort-complexity.git
 	branch = v8.10
-[submodule "coq-projects/finmap"]
-	path = coq-projects/finmap
+[submodule "coq-projects/coq-projects-upycoq/finmap"]
+	path = coq-projects/coq-projects-upycoq/finmap
 	url = https://github.com/math-comp/finmap.git
-[submodule "coq-projects/coqrel"]
-	path = coq-projects/coqrel
+[submodule "coq-projects/coq-projects-upycoq/coqrel"]
+	path = coq-projects/coq-projects-upycoq/coqrel
 	url = https://github.com/HazardousPeach/coqrel.git
 	branch = v8.10
-[submodule "coq-projects/twoSquare"]
-	path = coq-projects/twoSquare
+[submodule "coq-projects/coq-projects-upycoq/twoSquare"]
+	path = coq-projects/coq-projects-upycoq/twoSquare
 	url = https://github.com/thery/twoSquare.git
-[submodule "coq-projects/QuickChick"]
-	path = coq-projects/QuickChick
+[submodule "coq-projects/coq-projects-upycoq/QuickChick"]
+	path = coq-projects/coq-projects-upycoq/QuickChick
 	url = https://github.com/QuickChick/QuickChick.git
 	branch = 8.10
-[submodule "coq-projects/qarith"]
-	path = coq-projects/qarith
+[submodule "coq-projects/coq-projects-upycoq/qarith"]
+	path = coq-projects/coq-projects-upycoq/qarith
 	url = https://github.com/coq-contribs/qarith.git
 	branch = v8.9
-[submodule "coq-projects/pts"]
-	path = coq-projects/pts
+[submodule "coq-projects/coq-projects-upycoq/pts"]
+	path = coq-projects/coq-projects-upycoq/pts
 	url = https://github.com/coq-contribs/pts.git
 	branch = v8.9
-[submodule "coq-projects/maths"]
-	path = coq-projects/maths
+[submodule "coq-projects/coq-projects-upycoq/maths"]
+	path = coq-projects/coq-projects-upycoq/maths
 	url = https://github.com/coq-contribs/maths.git
 	branch = v8.9
-[submodule "coq-projects/int-map"]
-	path = coq-projects/int-map
+[submodule "coq-projects/coq-projects-upycoq/int-map"]
+	path = coq-projects/coq-projects-upycoq/int-map
 	url = https://github.com/coq-contribs/int-map.git
 	branch = v8.9
-[submodule "coq-projects/ieee754"]
-	path = coq-projects/ieee754
+[submodule "coq-projects/coq-projects-upycoq/ieee754"]
+	path = coq-projects/coq-projects-upycoq/ieee754
 	url = https://github.com/coq-contribs/ieee754.git
 	branch = v8.9
-[submodule "coq-projects/hardware"]
-	path = coq-projects/hardware
+[submodule "coq-projects/coq-projects-upycoq/hardware"]
+	path = coq-projects/coq-projects-upycoq/hardware
 	url = https://github.com/HazardousPeach/hardware.git
 	branch = v8.10
-[submodule "coq-projects/float"]
-	path = coq-projects/float
+[submodule "coq-projects/coq-projects-upycoq/float"]
+	path = coq-projects/coq-projects-upycoq/float
 	url = https://github.com/coq-contribs/float.git
 	branch = v8.9
-[submodule "coq-projects/dictionaries"]
-	path = coq-projects/dictionaries
+[submodule "coq-projects/coq-projects-upycoq/dictionaries"]
+	path = coq-projects/coq-projects-upycoq/dictionaries
 	url = https://github.com/coq-contribs/dictionaries.git
 	branch = v8.9
-[submodule "coq-projects/buchberger"]
-	path = coq-projects/buchberger
+[submodule "coq-projects/coq-projects-upycoq/buchberger"]
+	path = coq-projects/coq-projects-upycoq/buchberger
 	url = https://github.com/coq-community/buchberger.git
 	branch = v8.9
-[submodule "coq-projects/bdds"]
-	path = coq-projects/bdds
+[submodule "coq-projects/coq-projects-upycoq/bdds"]
+	path = coq-projects/coq-projects-upycoq/bdds
 	url = https://github.com/coq-contribs/bdds.git
 	branch = v8.10
-[submodule "coq-projects/area-method"]
-	path = coq-projects/area-method
+[submodule "coq-projects/coq-projects-upycoq/area-method"]
+	path = coq-projects/coq-projects-upycoq/area-method
 	url = https://github.com/coq-contribs/area-method.git
 	branch = v8.10
-[submodule "coq-projects/coq"]
-	path = coq-projects/coq
+[submodule "coq-projects/coq-projects-upycoq/coq"]
+	path = coq-projects/coq-projects-upycoq/coq
 	url = https://github.com/coq/coq.git
 	branch = v8.10
-[submodule "coq-projects/fcsl-pcm"]
-	path = coq-projects/fcsl-pcm
+[submodule "coq-projects/coq-projects-upycoq/fcsl-pcm"]
+	path = coq-projects/coq-projects-upycoq/fcsl-pcm
 	url = https://github.com/imdea-software/fcsl-pcm.git
-[submodule "coq-projects/GeoCoq"]
-	path = coq-projects/GeoCoq
+[submodule "coq-projects/coq-projects-upycoq/GeoCoq"]
+	path = coq-projects/coq-projects-upycoq/GeoCoq
 	url = https://github.com/GeoCoq/GeoCoq.git
-[submodule "coq-projects/coquelicot"]
-	path = coq-projects/coquelicot
+[submodule "coq-projects/coq-projects-upycoq/coquelicot"]
+	path = coq-projects/coq-projects-upycoq/coquelicot
 	url = https://github.com/HazardousPeach/coquelicot.git
 [submodule "deps/metalib"]
 	path = deps/metalib
 	url = https://github.com/plclub/metalib.git
-[submodule "coq-projects/additions"]
-	path = coq-projects/additions
+[submodule "coq-projects/coq-projects-upycoq/additions"]
+	path = coq-projects/coq-projects-upycoq/additions
 	url = https://github.com/coq-contribs/additions.git
 	branch = v8.9
-[submodule "coq-projects/distributed-reference-counting"]
-	path = coq-projects/distributed-reference-counting
+[submodule "coq-projects/coq-projects-upycoq/distributed-reference-counting"]
+	path = coq-projects/coq-projects-upycoq/distributed-reference-counting
 	url = https://github.com/coq-contribs/distributed-reference-counting.git
 	branch = v8.9
-[submodule "coq-projects/zsearch-trees"]
-	path = coq-projects/zsearch-trees
+[submodule "coq-projects/coq-projects-upycoq/zsearch-trees"]
+	path = coq-projects/coq-projects-upycoq/zsearch-trees
 	url = https://github.com/coq-contribs/zsearch-trees.git
-[submodule "coq-projects/topology"]
-	path = coq-projects/topology
+[submodule "coq-projects/coq-projects-upycoq/topology"]
+	path = coq-projects/coq-projects-upycoq/topology
 	url = https://github.com/coq-community/topology.git
-[submodule "coq-projects/lin-alg-8.10"]
-	path = coq-projects/lin-alg
+[submodule "coq-projects/coq-projects-upycoq/lin-alg-8.10"]
+	path = coq-projects/coq-projects-upycoq/lin-alg
 	url = git@github.com:HazardousPeach/lin-alg-8.10.git
-[submodule "coq-projects/VST"]
-	path = coq-projects/VST
+[submodule "coq-projects/coq-projects-upycoq/VST"]
+	path = coq-projects/coq-projects-upycoq/VST
 	url = https://github.com/HazardousPeach/VST.git
     branch = v8.10.2
-[submodule "coq-projects/coq-library-undecidability"]
-	path = coq-projects/coq-library-undecidability
+[submodule "coq-projects/coq-projects-upycoq/coq-library-undecidability"]
+	path = coq-projects/coq-projects-upycoq/coq-library-undecidability
 	url = https://github.com/HazardousPeach/coq-library-undecidability.git
         branch = v8.12.2
-[submodule "coq-projects/fermat4"]
-	path = coq-projects/fermat4
+[submodule "coq-projects/coq-projects-upycoq/fermat4"]
+	path = coq-projects/coq-projects-upycoq/fermat4
 	url = https://github.com/coq-contribs/fermat4.git
-[submodule "coq-projects/goedel"]
-	path = coq-projects/goedel
+[submodule "coq-projects/coq-projects-upycoq/goedel"]
+	path = coq-projects/coq-projects-upycoq/goedel
 	url = https://github.com/coq-community/goedel.git
 	branch = v8.9
-[submodule "coq-projects/tree-automata"]
-	path = coq-projects/tree-automata
+[submodule "coq-projects/coq-projects-upycoq/tree-automata"]
+	path = coq-projects/coq-projects-upycoq/tree-automata
 	url = https://github.com/coq-contribs/tree-automata.git
 	branch = v8.9
-[submodule "coq-projects/verdi"]
-	path = coq-projects/verdi
+[submodule "coq-projects/coq-projects-upycoq/verdi"]
+	path = coq-projects/coq-projects-upycoq/verdi
 	url = https://github.com/uwplse/verdi.git
-[submodule "coq-projects/verdi-raft"]
-	path = coq-projects/verdi-raft
+[submodule "coq-projects/coq-projects-upycoq/verdi-raft"]
+	path = coq-projects/coq-projects-upycoq/verdi-raft
 	url = https://github.com/uwplse/verdi-raft.git
-[submodule "coq-projects/zorns-lemma"]
-	path = coq-projects/zorns-lemma
+[submodule "coq-projects/coq-projects-upycoq/zorns-lemma"]
+	path = coq-projects/coq-projects-upycoq/zorns-lemma
 	url = https://github.com/coq-community/zorns-lemma.git
-[submodule "coq-projects/math-comp"]
-	path = coq-projects/math-comp
+[submodule "coq-projects/coq-projects-upycoq/math-comp"]
+	path = coq-projects/coq-projects-upycoq/math-comp
 	url = https://github.com/math-comp/math-comp.git
 [submodule "CompCert"]
 	path = CompCert
 	url = https://github.com/AbsInt/CompCert.git
-[submodule "coq-projects/smc"]
-	path = coq-projects/smc
+[submodule "coq-projects/coq-projects-upycoq/smc"]
+	path = coq-projects/coq-projects-upycoq/smc
 	url = https://github.com/dsksh/coq-smc.git
-[submodule "coq-projects/mod-red"]
-	path = coq-projects/mod-red
+[submodule "coq-projects/coq-projects-upycoq/mod-red"]
+	path = coq-projects/coq-projects-upycoq/mod-red
 	url = https://github.com/coq-contribs/mod-red.git
-[submodule "coq-projects/metalib"]
-	path = coq-projects/metalib
+[submodule "coq-projects/coq-projects-upycoq/metalib"]
+	path = coq-projects/coq-projects-upycoq/metalib
 	url = https://github.com/plclub/metalib.git

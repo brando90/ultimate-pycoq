@@ -39,8 +39,8 @@ setup(
     license='MIT',
 
     # currently
-    package_dir={'': 'u-pycoq-src'},
-    packages=find_packages('u-pycoq-src'),  # imports all modules/folders with  __init__.py & python files
+    package_dir={'': 'upycoq-src'},
+    packages=find_packages('upycoq-src'),  # imports all modules/folders with  __init__.py & python files
 
     # for pytorch see doc string at the top of file
     install_requires=[
@@ -86,10 +86,10 @@ setup(
         'rope',
         'pathos',
         'tqdm',
-        # 'aiofile',
+        'aiofile',
         # 'pytest',
-        # 'strace-parser',
-        # 'pytest-benchmark',
+        'strace-parser',
+        'pytest-benchmark',
         'dataclasses-json',
         'numpy',
         'sexpdata==0.0.4',
