@@ -18,3 +18,8 @@ export CUDA_VISIBLE_DEVICES=5; export SLURM_JOBID=$(python -c "import random;pri
 echo CUDA_VISIBLE_DEVICES = $CUDA_VISIBLE_DEVICES; echo SLURM_JOBID = $SLURM_JOBID; echo hostname = $(hostname)
 ulimit -n 120000; ulimit -Sn; ulimit -Hn
 
+# - destroy local, get latest from git
+git reset --hard HEAD
+git clean -f -d
+git pull
+
