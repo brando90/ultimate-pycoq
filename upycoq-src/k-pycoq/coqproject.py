@@ -1,8 +1,11 @@
+import os
 import re
 import subprocess
-from dataclasses import dataclass
+import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
+import opam
 
 
 # TODO: will this require passing an env to subprocess?
@@ -14,10 +17,16 @@ class CoqProject:
     switch: str
     project_directory: Path  # coq project root directory
 
-    build_command: str = None  # "make clean && make"
-    build_order: List[str] = None
+    build_command: str  # "make clean && make"
+    build_order: List[str] = field(init=False)
+    flags: List[str] = field(init=False)
 
-    def _build_order(self):
+    def __post_init__(self):
+        """Post init hook. Computes build order of coq files in project."""
+        self.build_order = self._build_order()
+        self.flags = self._get_flags()
+
+    def _build_order(self) -> List[str]:
         """Computes build order of the coq files in the project based on dependency graph."""
 
         # make sure _CoqProject exists in project_directory
@@ -25,27 +34,45 @@ class CoqProject:
         if not _CoqProject.exists():
             raise RuntimeError(f'Cannot find _CoqProject in {self.project_directory}.')
 
-        command = f'opam exec --switch {self.switch} -- coqdep -f _CoqProject -sort'
-        result = subprocess.run(command.split(), capture_output=True, cwd=self.project_directory)
+        result = opam.run('coqdep -f _CoqProject -sort -suffix .v', self.switch, self.project_directory)
 
-        self.build_order = result.stdout.decode().split()
-        # we want original .v files, not .vo files
-        self.build_order = [file.replace('.vo', '.v') for file in self.build_order]
+        if result.returncode != 0:
+            raise RuntimeError(f'Failed to get build order for {self.project_name} while running'
+                               f'{" ".join(result.args)}.\n'
+                               f'{result.stderr.decode()}')
+
+        build_order = result.stdout.decode().split()
+        return build_order
+
+    def _get_flags(self):
+        """Gets directory flags for coq project."""
+        with tempfile.NamedTemporaryFile(dir=self.project_directory) as temporary_file:
+            result = opam.run(f'coq_makefile -f _CoqProject -o {temporary_file.name}',
+                              self.switch, self.project_directory)
+
+            if result.returncode != 0:
+                raise RuntimeError(f'Failed to get flags for {self.project_name}.\n {result.stderr.decode()}')
+            make_conf_file = temporary_file.name + '.conf'
+
+            # directory flags stored in "COQMF_COQLIBS"
+            with open(make_conf_file, 'r') as f:
+                flags = re.findall(r'COQMF_COQLIBS =\s*(.*)', f.read())[0].split()
+
+            # delete make_conf_file (temporary file is deleted automatically)
+            os.remove(make_conf_file)
+
+            return flags
 
     def compile(self):
         """Compiles the coq project."""
         if self.build_command is None:
             raise RuntimeError(f'Cannot compile {self.project_name} without build_command.')
 
-        # This could break with more complex build commands
-        # split commands by && and ; and run them in order
-        for command in re.split(r'&&|;', self.build_command):
-            opam_build_command: str = f'opam exec --switch {self.switch} -- {command}'
+        results = opam.run(self.build_command, self.switch, self.project_directory)
 
-            result = subprocess.run(opam_build_command.split(), capture_output=True, cwd=self.project_directory)
-
+        for result in results:
             if result.returncode != 0:
-                raise RuntimeError(f'Failed to compile {self.project_name} with command {opam_build_command}.\n'
+                raise RuntimeError(f'Failed to compile {self.project_name} when running {" ".join(result.args)}.\n'
                                    f'{result.stderr.decode()}')
             else:
                 # TODO: log coq warnings from result.stderr.decode()
