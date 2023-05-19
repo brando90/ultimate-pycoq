@@ -1,6 +1,6 @@
 [
     {
-        "project_name": "lf",
+        "project_name": "coq-projects-basic-lf",
         "train_files": [
             "Basics.v",
             "Induction.v",

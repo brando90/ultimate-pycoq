@@ -3,15 +3,19 @@ from typing import Union
 import serapi_pycoq
 from serapi_pycoq.common import CoqContext
 from serapi_pycoq.opam import strace_build_coq_project_and_get_filenames, opam_original_pycoq_pre_setup
-from serapi_pycoq.project_splits import get_proj_splits_based_on_name_of_path2data, CoqProjs
+from serapi_pycoq.project_splits import get_coq_projs, CoqProjs
 from serapi_pycoq.serapi import execute, CoqExn
 from serapi_pycoq.utils import get_coq_serapi
 
-import asyncio
+from asyncio import run
 
 
-async def example_execute_coq_files_from_coq_proj_in_pycoq(path2data: str = '~/data/lf_proj/'):
-    coq_proj: CoqProjs = get_proj_splits_based_on_name_of_path2data(path2data).coq_projs[0]
+async def example_execute_coq_files_from_coq_proj_in_pycoq(
+        path_2_coq_projs: str = '~/ultimate-pycoq/coq-projects/coq-projects-basic-lf/',
+        # path_2_coq_projs: str = '~/data/lf_proj/',
+):
+    """ Tutorial example. """
+    coq_proj: CoqProjs = get_coq_projs(path_2_coq_projs).coq_projs[0]
     path2filenames_raw: list[str] = strace_build_coq_project_and_get_filenames(coq_proj, make_clean_coq_proj=True)
     path2filename: str
     for path2filename in path2filenames_raw:
@@ -30,8 +34,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
     # - compile coq proj files in serapi_pycoq
-    asyncio.run(example_execute_coq_files_from_coq_proj_in_pycoq('~/data/lf_proj/'))
-    # asyncio.run(example_execute_coq_files_from_coq_proj_in_pycoq('~/data/upycoq/'))
+    run(example_execute_coq_files_from_coq_proj_in_pycoq('~/ultimate-pycoq/coq-projects/basic-lf/'))
 
     # - done
     duration = time.time() - start_time

@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Union, Optional
 
 from serapi_pycoq.utils import clean_up_filename
-from uutils import load_json, merge_two_dicts
+from uutils import load_json, merge_two_dicts, expanduser
 
 
 @dataclass()
@@ -103,9 +103,11 @@ def list_dict_splits_2_list_splits(coq_projs: list[dict], path_2_coq_projs: Path
 
 # -- get the config file/meta-data for the coq projects as a Coq Projs object
 
-def get_lf_coq_projs() -> CoqProjs:
-    path_2_coq_projs: Path = Path('~/ultimate-pycoq/coq-projects/coq-projects-basic-lf/').expanduser()
-    path_2_coq_projs_json_splits: Path = Path('~/ultimate-pycoq/data_gen_files/lf_projs_splits.json').expanduser()
+def get_coq_projs(path_2_coq_projs: Union[Path, str]):
+    # path_2_coq_projs: Path = Path('~/ultimate-pycoq/coq-projects/coq-projects-basic-lf/').expanduser()
+    # path_2_coq_projs_json_splits: Path = Path('~/ultimate-pycoq/data_gen_files/lf_projs_splits.json').expanduser()
+    path_2_coq_projs: Path = expanduser(path_2_coq_projs)
+    path_2_coq_projs_json_splits: Path = path_2_coq_projs / 'projs-splits.json'
     coq_projs: list[dict] = load_json(path_2_coq_projs_json_splits)
     logging.info(f'{coq_projs[0].keys()=}')
     coq_projs: list[CoqProj] = list_dict_splits_2_list_splits(coq_projs, path_2_coq_projs)
@@ -113,45 +115,6 @@ def get_lf_coq_projs() -> CoqProjs:
     coq_projs: CoqProjs = CoqProjs(path_2_coq_projs=path_2_coq_projs,
                                    path_2_coq_projs_json_splits=path_2_coq_projs_json_splits,
                                    coq_projs=coq_projs)
-    return coq_projs
-
-
-def get_compcert_coq_projs() -> CoqProjs:
-    """ Get data set coq projs info (i.e. meta data) e.g. path2 coq-proj """
-    raise NotImplementedError
-
-
-def get_upycoq_projs(num_current_coqgym_projs: int = 124) -> CoqProjs:
-    path_2_coq_projs: Path = Path('~/ultimate-pycoq/coq-projects/coq-projects-upycoq/').expanduser()
-    print(f'{path_2_coq_projs=}')
-    path_2_coq_projs_json_splits: Path = Path('~/ultimate-pycoq/data_gen_files/upycoq_projs_splits.json').expanduser()
-    print(f'{path_2_coq_projs_json_splits=}')
-    coq_projs: list[dict] = load_json(path_2_coq_projs_json_splits)
-    logging.info(f'{coq_projs[0].keys()=}')
-    coq_projs: list[CoqProj] = list_dict_splits_2_list_splits(coq_projs, path_2_coq_projs)
-    assert len(coq_projs) == 124, f'Expected:\n{num_current_coqgym_projs} but got\n{len(coq_projs)=},' \
-                                  f'if you changed this you either need to remove the default value currently being' \
-                                  f'used or update the default value.'
-    coq_projs: CoqProjs = CoqProjs(path_2_coq_projs=path_2_coq_projs,
-                                   path_2_coq_projs_json_splits=path_2_coq_projs_json_splits,
-                                   coq_projs=coq_projs)
-    return coq_projs
-
-
-def get_proj_splits_based_on_name_of_path2data(path2data: Union[Path, str]) -> CoqProjs:
-    name_path2data: str = str(path2data)
-    if 'lf_proj' in name_path2data:
-        coq_projs: CoqProjs = get_lf_coq_projs()
-    elif 'debug_coq_project' in name_path2data:
-        # coq_projs: CoqProjs = get_debug_projprojs_meta_data()
-        raise NotImplementedError
-    elif 'compcert' in name_path2data:
-        # coq_projs: CoqProjs = get_compcert_coq_projs()
-        raise NotImplementedError
-    elif 'upycoq' in name_path2data:
-        coq_projs: CoqProjs = get_upycoq_projs()
-    else:
-        raise ValueError(f'Invalid type of data set/benchmark, got (invalid): {name_path2data=}')
     return coq_projs
 
 
