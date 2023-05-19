@@ -2,10 +2,8 @@
 functions to work with coq-serapi
 '''
 import logging
-import os
 import re
 import json
-import time
 
 from typing import List, Union, Tuple, Optional
 
@@ -15,8 +13,6 @@ from serapi_pycoq.common import LocalKernelConfig
 
 from dataclasses import dataclass
 from collections.abc import Iterable
-
-from pdb import set_trace as st
 
 COMPLETED_PATTERN = re.compile(r"\(Answer\s\d+\sCompleted\)")
 ANSWER_PATTERN = re.compile(r"\(Answer\s(\d+)(.*)\)")
@@ -904,8 +900,7 @@ def fixing_query_goals_lc_refined_coq_stmt_vs_stmt_should_be_same_test():
     :return:
     """
     import os
-    from pycoq.utils import get_coq_serapi
-    from pycoq.common import CoqContext, get_pycoq_context_as_dict
+    from pycoq.common import get_pycoq_context_as_dict
     from pycoq.opam import opam_executable
     # -- Args
     switch: str = 'coq-8.16.0'
