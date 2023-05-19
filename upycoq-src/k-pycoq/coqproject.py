@@ -99,7 +99,7 @@ if __name__ == '__main__':
     print('Checking build order and flags for ConstructiveGeometry project.')
     assert project.build_order == ['basis.v', 'part1.v', 'part2.v', 'part3.v', 'affinity.v', 'orthogonality.v', 'problems.v']
     assert project.flags == ['-R', '.', 'ConstructiveGeometry']
-    
+
     project.compile()
     # search project directory to make sure every .v file has a corresponding .vo, .vos, .vok, .glob files
     for file in project.project_directory.iterdir():
