@@ -11,7 +11,7 @@ from asyncio import run
 
 
 async def example_execute_coq_files_from_coq_proj_in_pycoq(path_2_coq_projs: str,
-                                                           # path_2_data: str = '~/data/lf_proj/',
+                                                           # path_2_data: str = '~/data/lf_proj/',  # todo
                                                            ):
     """ Tutorial example. """
     print(f'{path_2_coq_projs=}')
@@ -24,9 +24,10 @@ async def example_execute_coq_files_from_coq_proj_in_pycoq(path_2_coq_projs: str
             stmts_in_file: iter[str] = serapi_pycoq.split.coq_stmts_of_context(coq_ctxt)
             for stmt_id, stmt in enumerate(stmts_in_file):
                 goals: Union[str, list] = await execute(stmt, coq)
-                proof_term: Union[str, list[CoqExn]] = await coq.get_current_proof_term_via_add()
                 print(f'{goals=}')
-                print(f'{proof_term=}')
+
+                # proof_term: Union[str, list[CoqExn]] = await coq.get_current_proof_term_via_add()
+                # print(f'{proof_term=}')
 
 
 if __name__ == '__main__':

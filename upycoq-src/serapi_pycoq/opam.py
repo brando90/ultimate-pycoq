@@ -730,7 +730,6 @@ def strace_build_coq_project_and_get_filenames(coq_proj: CoqProj,
     workdir = coq_project_path
     filenames: list[str] = []  # coq-proj/pkg filenames pycoq context
     logging.info(f'{filenames=}')
-    st()
     if len(filenames) == 0:
         print('-> about to call strace_build_with_build_command')
         filenames = strace_build_with_build_command(switch, coq_project_name, coq_project_path, build_command, regex,
@@ -748,7 +747,6 @@ def strace_build_with_build_command(switch: str,
                                     coq_project_path: str,
                                     build_command: str,
                                     regex: str,
-                                    workdir: Optional = None,
                                     activate_switch_py_main: bool = True,
                                     make_clean_coq_proj: bool = False,
                                     ) -> list[str]:

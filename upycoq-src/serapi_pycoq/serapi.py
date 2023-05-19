@@ -535,7 +535,6 @@ class CoqSerapi():
         if coq_exns:
             logging.info(f'{await self.query_local_ctx_and_goals()=}')
             logging.info(f'{await self.in_proof_mode()=}')
-            st()
             raise ValueError(f'Got an error, are you sure you can get the proof term right now? err: {coq_exns=}'
                              f', {self._sent_history=}')
             # return coq_exns
