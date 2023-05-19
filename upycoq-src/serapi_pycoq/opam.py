@@ -730,7 +730,9 @@ def strace_build_coq_project_and_get_filenames(coq_proj: CoqProj,
     workdir = coq_project_path
     filenames: list[str] = []  # coq-proj/pkg filenames pycoq context
     logging.info(f'{filenames=}')
+    st()
     if len(filenames) == 0:
+        print('-> about to call strace_build_with_build_command')
         filenames = strace_build_with_build_command(switch, coq_project_name, coq_project_path, build_command, regex,
                                                     workdir, make_clean_coq_proj=make_clean_coq_proj)
     # - return filenames from pycoq context e.g. ['/afs/cs.stanford.edu/u/brando9/proverbot9001/coq-projects/constructive-geometry/problems.v._pycoq_context', ...,] ok if you save this it needs to go to the data set dir since it's server dependent/absolute path depedent.
@@ -756,6 +758,7 @@ def strace_build_with_build_command(switch: str,
         - main discussion of how to use eval with my opam setting SO: https://stackoverflow.com/questions/74803306/what-is-the-difference-between-eval-opam-env-switch-switch-set-switch-a/75513889?noredirect=1#comment133271645_75513889
         - how to specify absolute path to make...but I think now it's not needed: https://stackoverflow.com/questions/28054448/specifying-path-to-makefile-using-make-command#:~:text=You%20can%20use%20the%20%2DC,a%20name%20other%20than%20makefile%20.
     """
+    print(f'{strace_build_with_build_command=}')
     workdir = coq_project_path if workdir is None else workdir
 
     # - activate switch

@@ -10,11 +10,11 @@ from serapi_pycoq.utils import get_coq_serapi
 from asyncio import run
 
 
-async def example_execute_coq_files_from_coq_proj_in_pycoq(
-        path_2_coq_projs: str = '~/ultimate-pycoq/coq-projects/coq-projects-basic-lf/',
-        # path_2_coq_projs: str = '~/data/lf_proj/',
-):
+async def example_execute_coq_files_from_coq_proj_in_pycoq(path_2_coq_projs: str,
+                                                           # path_2_data: str = '~/data/lf_proj/',
+                                                           ):
     """ Tutorial example. """
+    print(f'{path_2_coq_projs=}')
     coq_proj: CoqProjs = get_coq_projs(path_2_coq_projs).coq_projs[0]
     path2filenames_raw: list[str] = strace_build_coq_project_and_get_filenames(coq_proj, make_clean_coq_proj=True)
     path2filename: str

@@ -26,3 +26,4 @@ fi
 cd $HOME/ultimate-pycoq/
 conda activate upycoq
 python -m pdb -c continue ~/ultimate-pycoq/tutorials/tutorial_u_serapi_pycoq.py
+python ~/ultimate-pycoq/tutorials/tutorial_u_serapi_pycoq.py
