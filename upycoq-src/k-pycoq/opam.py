@@ -7,7 +7,8 @@ import shlex
 
 
 def run(command: str, switch: str, cwd: Path, **kwargs) -> CompletedProcess:
-    """Runs command with opam switch.
+    """Runs command with opam switch. Only throws an error if switch not found. Errors encountered while running
+    command are returned in CompletedProcess.stderr.
 
     :param command: command to run
     :param switch: opam switch to run command in
@@ -16,6 +17,10 @@ def run(command: str, switch: str, cwd: Path, **kwargs) -> CompletedProcess:
     :return: list of subprocess.CompletedProcess objects
     """
     check_switch_installed(switch, cwd, **kwargs)
+
+    # set -e makes the shell exit if any command fails (returns non-zero exit code)
+    # This is so commands can output to stderr, but ignored if no non-zero error code was returned
+    command = "set -e; " + command
 
     opam_command: str = f'opam exec --switch {switch} -- sh -c {shlex.quote(command)}'
     result = subprocess.run(opam_command, capture_output=True, shell=True, cwd=cwd, **kwargs)
@@ -44,8 +49,8 @@ if __name__ == '__main__':
 
     result = run('This should error; echo "hello world"', switch, Path.cwd())
     assert result.stderr.decode() == "sh: This: command not found\n" \
-           and result.stdout.decode() == 'hello world\n' \
-           and result.returncode == 0
+           and result.stdout.decode() == '' \
+           and result.returncode == 127
 
     result = run('This should error && echo "hello world"', switch, Path.cwd())
     assert result.stderr.decode() == "sh: This: command not found\n" \

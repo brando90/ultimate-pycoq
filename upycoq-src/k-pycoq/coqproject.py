@@ -78,16 +78,15 @@ class CoqProject:
         if self.build_command is None:
             raise RuntimeError(f'Cannot compile {self.project_name} without build_command.')
 
-        results = opam.run(self.build_command, self.switch, self.project_directory)
+        result = opam.run(self.build_command, self.switch, self.project_directory)
 
-        for result in results:
-            if result.returncode != 0:
-                raise RuntimeError(f'Failed to compile {self.project_name} when running {" ".join(result.args)}.\n'
-                                   f'{result.stderr.decode()}')
-            else:
-                # TODO: log coq warnings from result.stderr.decode()
-                # Possibly with debug flag
-                pass
+        if result.returncode != 0:
+            raise RuntimeError(f'Failed to compile {self.project_name} when running {self.build_command}.\n'
+                               f'{result.stderr.decode()}')
+        else:
+            # TODO: log coq warnings from result.stderr.decode()
+            # Possibly with debug flag
+            pass
 
 
 if __name__ == '__main__':
