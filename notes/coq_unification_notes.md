@@ -2,7 +2,9 @@
 
 # let's try to see if raw install of unification plugin works
 
-unicoq: https://stackoverflow.com/questions/72924211/how-does-one-access-the-dependent-type-unification-algorithm-from-coqs-internal
+unicoq: 
+- unicoq: https://github.com/unicoq/unicoq
+- SO: https://stackoverflow.com/questions/72924211/how-does-one-access-the-dependent-type-unification-algorithm-from-coqs-internal
 
 # create a brand new switch for it
 ```bash
