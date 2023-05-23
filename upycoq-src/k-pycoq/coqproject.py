@@ -6,6 +6,34 @@ from pathlib import Path
 from typing import List
 import opam
 
+@dataclass()
+class CoqFile:
+    """Represents a coq file. Contains information about the file's name, directory, and dependencies."""
+
+    file_name: str
+    file_directory: Path
+
+    # TODO: Potentially include file dependencies although this might not ever be needed
+    # dependencies: List['CoqFile']  # Use forward reference (not needed since python 3.10)
+
+    def __post_init__(self):
+        """Post init hook. Makes sure that file_directory exists."""
+        if not self.file_directory.exists():
+            raise ValueError(f"Directory {self.file_directory} does not exist.")
+
+    def __str__(self):
+        return str(self.file_directory / self.file_name)
+
+    def __repr__(self):
+        return str(self)
+
+    def __iter__(self):
+        for coq_statement in self.coq_statements():
+            yield coq_statement
+
+    def coq_statements(self) -> List[str]:
+        pass
+
 
 @dataclass()
 class CoqProject:
@@ -30,6 +58,9 @@ class CoqProject:
 
     def __post_init__(self):
         """Post init hook. Computes build order of coq files in project."""
+        if not self.project_directory.exists():
+            raise ValueError(f"Project directory {self.project_directory} does not exist.")
+
         self.build_order = self._build_order()
         self.flags = self._get_flags()
 

@@ -189,10 +189,11 @@ async def run_parser(source: str):
 
 
 async def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('source', help='source .v coq file')
-    args = parser.parse_args()
-    source = os.path.abspath(args.source)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('source', help='source .v coq file')
+    # args = parser.parse_args()
+    # source = os.path.abspath(args.source)
+    source = os.path.abspath('/Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/basic-lf/lf/Basics.v')
 
     parser_l = []
     async for s in run_parser(source):
