@@ -1,15 +1,16 @@
 import re
 from typing import Iterator, List
 
+
 COMMENT_START = r'\(\*'  # (*
-COMMENT_FINISH = r'\*\)'  # *)
-QUOTE = r'"' # "
+COMMENT_END = r'\*\)'  # *)
+QUOTE = r'"'  # "
 STATEMENT_END = r'\.\s+'  # . followed by at least one whitespace
 
 # regex to find the start and end of comments
 COMMENT_SEPARATORS = (
     f'(?P<start>{COMMENT_START})|'
-    f'(?P<end>{COMMENT_FINISH})'
+    f'(?P<end>{COMMENT_END})'
 )
 comment_separators = re.compile(COMMENT_SEPARATORS)
 
@@ -21,137 +22,81 @@ SEPARATORS = (
     f'(?P<quote>{QUOTE})|'
     f'(?P<statement_end>{STATEMENT_END})|'
     f'(?P<comment_start>{COMMENT_START})|'
-    f'(?P<comment_finish>{COMMENT_FINISH})')
+    f'(?P<comment_end>{COMMENT_END})')
 separators = re.compile(SEPARATORS)
 
 
 class StatementParser(Iterator[str]):
-    def __next__(self):
-        return self.parse_statement()
 
     def __init__(self, file):
         self.file = file
-        self.buffer = ''
-        self.line_number = 0
-        self.current_statement = []
+        self.contents: str = file.read()
+        self.line_number: int = 0
+        self.statement_start: int = 0  # start of the current statement in self.contents
+        self.file_pointer: int = 0  # current position in self.contents while parsing
+        self.separators = separators.finditer(self.contents)
 
-    def _end_of_file(self):
+    def __next__(self):
+        return self.next_statement()
+
+    def parse_comment(self):
         """
-        Reads the next line from file to buffer if buffer is empty. If end of file is reached, buffer remains empty.
-        :return: True if end of file is reached, False otherwise
+        Parses the next comment from the file. Assumes that the starting comment '(*' has already been read from self.separators.
+        :return: None
         """
-        if self.buffer == '':
-            self.buffer = self.file.readline()
-            self.line_number += 1
-        return self.buffer == ''
-
-    def _dump_buffer(self, idx: int = None) -> str:
-        """
-        returns the buffer content upto idx, and removes the text upto idx from the buffer.
-        :param idx: index to dump upto
-        :return: buffer contents upto idx
-        """
-        idx = idx if idx is not None else len(self.buffer)
-
-        contents = self.buffer[:idx]
-        self.buffer = self.buffer[idx:]
-
-        return contents
-
-    def next_match(self, regex, start: bool = True) -> (bool, List[str]):
-        """
-        Finds the next match of regex in the file, and moves the buffer to the start or end of the match
-        depending on the value of start.
-        :param regex: regex to match
-        :param start: if True, move buffer to start of match, else move buffer to end of match
-        :return: regex match if found and buffer contents upto the match, split by newlines. Note that the
-        positions of the regex match are wrong since the buffer has been modified.
-        """
-        contents = []
-        while not self._end_of_file():
-            m = re.search(regex, self.buffer)
-            if m is None:
-                contents.append(self._dump_buffer())
-            else:
-                idx = m.start() if start else m.end()
-                contents.append(self._dump_buffer(idx=idx))
-                return m, contents
-
-        return None, contents
-
-    def parse_comment(self) -> List[str]:
-        """
-        Moves the buffer to the end of the next comment.
-        :return: the parsed comment, split by newlines
-        """
-        comment_level = 0
-        comment = []
-
-        while True:
-            m, content = self.next_match(comment_separators, start=False)
-            if not m:
-                raise EOFError('EOF reached before end of comment.')
-
-            comment.extend(content)
-
-            sep_type = m.lastgroup
-            if sep_type == 'start':
+        comment_level = 1
+        for m in self.separators:
+            sep = m.lastgroup
+            if sep == 'comment_start':
                 comment_level += 1
-            elif sep_type == 'end':
+            elif sep == 'comment_end':
                 comment_level -= 1
 
             if comment_level == 0:
-                return comment
+                self.file_pointer = m.end()
+                return
+        raise EOFError('EOF reached before end of comment')
 
-    def parse_quote(self) -> List[str]:
+    def parse_quote(self):
         """
-        Moves the buffer to the end of the next quote.
-        :return: the parsed quote, split by newlines
+        Parses the next quote from the file. Assumes that the starting quote has already been read from self.separators.
+        :return: None
         """
-        in_quote = False
-        quote = []
+        for m in self.separators:
+            sep = m.lastgroup
+            if sep == 'quote':
+                self.file_pointer = m.end()
+                return
+        raise EOFError('EOF reached before end of quote')
 
-        while True:
-            m, content = self.next_match(quote_separator, start=False)
-            if not m:
-                raise EOFError('EOF reached before end of quote.')
-
-            quote.extend(content)
-
-            in_quote = not in_quote
-            if not in_quote:
-                return quote
-
-    def parse_statement(self) -> str:
+    def next_statement(self) -> str:
         """
-        Moves the buffer to the end of the next statement.
-        :return: the parsed statement
+        Parses the next statement from the file.
+        :return: the next statement
         """
-        statement = []
-
-        while not self._end_of_file():
-            # find the next comment, quote, or statement end
-            m, content = self.next_match(separators, start=True)
-
-            statement.extend(content)
-
-            # if we have reached the end of the file, return the statement
-            if m is None:
-                return ''.join(statement)
-
-            sep_type = m.lastgroup
-            if sep_type == 'statement_end':
-                statement.append(self._dump_buffer(idx=len(m.group())))
-                return ''.join(statement)
-            elif sep_type == 'quote':
-                statement.extend(self.parse_quote())
-            elif sep_type == 'comment_start':
-                statement.extend(self.parse_comment())
-            elif sep_type == 'comment_finish':
-                raise Exception(f'Unexpected comment end found on line {self.line_number}.')
+        for m in self.separators:
+            self.file_pointer = m.start()
+            sep = m.lastgroup
+            if sep == 'comment_start':
+                self.parse_comment()
+            elif sep == 'quote':
+                self.parse_quote()
+            elif sep == 'statement_end':
+                self.file_pointer = m.end()
+                statement = self.contents[self.statement_start:self.file_pointer]
+                self.statement_start = self.file_pointer
+                return statement
             else:
-                raise Exception(f'Unknown separator: {sep_type}')
+                raise Exception(f'Unknown separator: {sep}')
 
+        self.file_pointer = len(self.contents)
+        statement = self.contents[self.statement_start:]
+        self.statement_start = self.file_pointer
+
+        # return last part of file, even if we didn't find a statement end
+        # (it could be we had a period followed by EOF)
+        if statement != '':
+            return statement
         raise StopIteration
 
 
@@ -263,7 +208,9 @@ if __name__ == '__main__':
 
     # begin time test
     import time
-    start = time.time()
+
+    total_parse_time = 0
+
 
     def test_parse_comment(coq_text, true_statements):
         import tempfile
@@ -271,30 +218,39 @@ if __name__ == '__main__':
         with tempfile.NamedTemporaryFile(mode='w+t') as temporary_file:
             temporary_file.write(coq_text)
             temporary_file.seek(0)
+
+            start = time.time()
+
             parser = StatementParser(temporary_file)
+            # for statement in statement_iter(temporary_file):
             for statement in parser:
                 statements.append(statement)
+
+            end = time.time()
+            global total_parse_time
+            total_parse_time += end - start
         assert statements == true_statements
+
 
     for i in range(1000):
         coq_test = """\
         (* This is a comment *).
-        "This is a string.".
+        "This is a string.".   
         "This is a. string. with a (* comment *) in it".
         "This is a string with.a (* comment (* nested comment *) *) in it".
-        (* This is a comment.with a "string" in it *).
+        (* This is a comment. with a "string" in it *).
         (* This is a comment with a "string (* nested. comment *) " in it *).
-        (* This is a comment.with a "string (* nested comment (* nested.comment *) *) " in it *).
+        (* This is a comment.with a "string (* nested comment (* nested. comment *) *) " in it *).
         Require Import Lia. (* comment after line *).
         """
 
         true_statements = ['(* This is a comment *).\n',
-                           '"This is a string.".\n',
+                           '"This is a string.".   \n',
                            '"This is a. string. with a (* comment *) in it".\n',
                            '"This is a string with.a (* comment (* nested comment *) *) in it".\n',
-                           '(* This is a comment.with a "string" in it *).\n',
+                           '(* This is a comment. with a "string" in it *).\n',
                            '(* This is a comment with a "string (* nested. comment *) " in it *).\n',
-                           '(* This is a comment.with a "string (* nested comment (* nested.comment *) *) " in it *).\n',
+                           '(* This is a comment.with a "string (* nested comment (* nested. comment *) *) " in it *).\n',
                            'Require Import Lia. ', '(* comment after line *).\n']
 
         test_parse_comment(dedent(coq_test), true_statements)
@@ -307,12 +263,13 @@ if __name__ == '__main__':
         Qed.
         """
 
-        true_statements = ['\nTheorem n_plus_1_greater_than_n: (* comment inside statement *) forall n: nat, n + 1> n.\n',
-                           'Proof.\n',
-                           'intro. ',
-                           '(* comment after line *)\n'
-                           '(* comment before line *) lia.\n',
-                           'Qed.\n']
+        true_statements = [
+            '\nTheorem n_plus_1_greater_than_n: (* comment inside statement *) forall n: nat, n + 1> n.\n',
+            'Proof.\n',
+            'intro. ',
+            '(* comment after line *)\n'
+            '(* comment before line *) lia.\n',
+            'Qed.\n']
 
         test_parse_comment(dedent(coq_test), true_statements)
 
@@ -334,21 +291,21 @@ if __name__ == '__main__':
         """
 
         true_statements = ['\nRequire Import Strings.String.\n',
-                           'Local Open Scope string_scope.\n',
-                           '\n(* comment with single double quote\n(* *) "\n*)\n\n'
+                           'Local Open Scope string_scope.\n\n',
+                           '(* comment with single double quote\n(* *) "\n*)\n\n'
                            'Definition test : string := "Hello "" .World!".\n',
-                           'Definition test2 : string := " . "". "". (* *) ".\n',
-                           '\n"String with single open comment (* "\n'
-                           '"String with single close comment *) "\n'
-                           '\nPrint test.\n']
+                           'Definition test2 : string := " . "". "". (* *) ".\n\n',
+                           '"String with single open comment (* "\n'
+                           '"String with single close comment *) "\n\n'
+                           'Print test.\n']
 
         test_parse_comment(dedent(coq_test), true_statements)
 
         coq_test = """
-        "string""str. ing"   "str. ing""string" (* com. ment *). "string""string" (* comment *)(* com. ment *).
+        "string""str. ing"   "str. ing""string" (* com. ment *).  "string""string" (* comment *)(* com. ment *).
         """
 
-        true_statements = ['\n"string""str. ing"   "str. ing""string" (* com. ment *). ',
+        true_statements = ['\n"string""str. ing"   "str. ing""string" (* com. ment *).  ',
                            '"string""string" (* comment *)(* com. ment *).\n']
 
         test_parse_comment(dedent(coq_test), true_statements)
@@ -370,6 +327,4 @@ if __name__ == '__main__':
 
         test_parse_comment(dedent(coq_test), true_statements)
 
-    end = time.time()
-
-    print(f'All tests passed in time {end - start:.2f}s')
+    print(f'All tests passed in time {total_parse_time:.2f}s')
