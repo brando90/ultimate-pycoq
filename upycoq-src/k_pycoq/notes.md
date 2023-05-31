@@ -64,3 +64,58 @@ TODO: write this file
 This file will let us interact with coq by sending coq statements and receiving responses. We should also be able to query goals and proofs (what else?)
 
 One thing that would be nice is to be able to use different kernels that implement .add, .exec, etc. methods so we can try out different backends easily. This might not be so feasible though, as making the kernels each compatible with the same structure for use in the interface might be difficult. It would probably just be easier to write a separate interface for each kernel, especially for the difference between using coqidetop with xml and serapi with s-expressions (serapi and e-pycoq might be able to use the same interface). This requires experimentation.
+
+
+# LSP vs SERAPI
+
+## LSP pros
+ - Document model is very easy to use down the line/very general
+   - Only have to manage a single string of text and lsp manages parsing and recompiling
+ - Probably more efficient than serapi
+ - Barrier to entry for new project members is much lower
+
+## LSP cons
+ - Time/effort required to implement backend might be much more than serapi
+ - Very little documentation (might be coming in near future)
+ - Not fully functional yet (might be good enough for our purposes though)
+
+## SERAPI pros
+ - Already implemented
+ - More documentation
+ - Much easier to implement backend
+
+## SERAPI cons
+ - Deprecated in favor of LSP
+ - Much less powerful then LSP
+ - Requires more working knowledge of api internals to use
+   - More work for new project members to get up to speed
+ - Might be less efficient than LSP
+
+# Current Evaluation Model
+```
+{scraper, eval} <-> [Pycoq]_py.api <-> [Kernal]_py.api
+<-> [Specific Backend]_py.api <-> (Backend)_original_backend.api e.g. serapi, lsp
+<-> (Coq, perhaps we don't care parenthesis) 
+
+```
+
+Training Data
+ - (entire, partial) Proof Terms (execute coq stmts e.g. tactics)
+ - coq files
+ - proof state, tactic, partial proof
+ - local lemmas
+tasks: https://arxiv.org/abs/2102.06203 co-training 
+
+Tasks ({scraper, eval} <-> [Pycoq]_py.api)
+ - predict entire proof term from target theorem <x=tt,y=ept>
+ - predict hole remaining proof term  (e.g. hole)/tactics/tactic/proof length from target theorem, proof state (local context, some global context) e.g <x=(tt, ps, gc), y=(ppt, tactic script, tactic, proof length ast, len proof # tactics)>
+
+tt=target theorem
+ept = entire proof term
+ps = proof state
+gc = global context
+ppt = partial proof term
+
+Evaluate (on HELM using string metrics, provers [e.g. Zero zero proof gen, Parsel])
+ - avg/exact string accuracy, perplexity/loss
+ - Proving accuracy using a prover
