@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from shlex import split
 from typing import List
-import opam
+import k_pycoq.opam as opam
 
 from k_pycoq.parse import statement_iter
 
@@ -41,7 +41,7 @@ class CoqFile:
         file_path: Path = self.path
         with open(file_path, mode='rt') as fp:
             for coq_statement in statement_iter(fp):
-                yield coq_statement
+                yield coq_statement.strip()
 
     @property
     def path(self):

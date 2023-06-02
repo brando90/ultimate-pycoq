@@ -2,17 +2,18 @@
 Defines a kernel interface for Coq. This file outlines the main entry point for interacting with Coq.
 """
 
-class Kernel:
+
+class AbstractKernel:
 
     def __init__(self):
         pass
 
-    def __aenter__(self):
+    async def __aenter__(self):
         """starts kernel"""
         await self.start()
         return self
 
-    def __aexit__(self, exc_type, exc, tb):
+    async def __aexit__(self, exc_type, exc, tb):
         """closes kernel"""
         await self.terminate()
 
@@ -31,4 +32,3 @@ class Kernel:
     async def query(self, statement: str):
         """queries statement to kernel"""
         pass
-

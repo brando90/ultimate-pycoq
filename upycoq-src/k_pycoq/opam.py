@@ -4,6 +4,41 @@ import subprocess
 from pathlib import Path
 from subprocess import CompletedProcess
 import shlex
+import asyncio
+import pexpect
+import os
+
+
+def wrap_command(command: str, switch: str) -> str:
+    """Wraps command so it is executed in switch
+
+    :param command: command to wrap
+    :param switch: opam switch to run command in
+    :return: wrapped command
+    """
+    # set -e makes the shell exit if any command fails (returns non-zero exit code)
+    # This is so commands can output to stderr, but ignored if no non-zero error code was returned
+    command = 'set -e; ' + command
+
+    return f'opam exec --switch {switch} -- sh -c {shlex.quote(command)}'
+
+
+def create_opam_subprocess(command: str, switch: str, cwd: Path, **kwargs) -> pexpect.spawn:
+    """Creates a subprocess object for running an async command in an opam switch.
+
+    :param command: command to run
+    :param switch: opam switch to run command in
+    :param cwd: current working directory
+    :param kwargs: kwargs passed to asyncio.create_subprocess_exec
+    :return: asyncio.subprocess.Process
+    """
+    check_switch_installed(switch, cwd)
+
+    opam_command: str = wrap_command(command, switch)
+
+    opam_subprocess = pexpect.spawn(opam_command, cwd=cwd, encoding='utf-8', echo=False, **kwargs)
+
+    return opam_subprocess
 
 
 def run(command: str, switch: str, cwd: Path, **kwargs) -> CompletedProcess:
@@ -18,11 +53,8 @@ def run(command: str, switch: str, cwd: Path, **kwargs) -> CompletedProcess:
     """
     check_switch_installed(switch, cwd, **kwargs)
 
-    # set -e makes the shell exit if any command fails (returns non-zero exit code)
-    # This is so commands can output to stderr, but ignored if no non-zero error code was returned
-    command = "set -e; " + command
+    opam_command: str = wrap_command(command, switch)
 
-    opam_command: str = f'opam exec --switch {switch} -- sh -c {shlex.quote(command)}'
     result = subprocess.run(opam_command, capture_output=True, shell=True, cwd=cwd, **kwargs)
 
     return result

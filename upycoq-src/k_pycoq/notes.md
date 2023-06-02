@@ -66,6 +66,13 @@ This file will let us interact with coq by sending coq statements and receiving 
 One thing that would be nice is to be able to use different kernels that implement .add, .exec, etc. methods so we can try out different backends easily. This might not be so feasible though, as making the kernels each compatible with the same structure for use in the interface might be difficult. It would probably just be easier to write a separate interface for each kernel, especially for the difference between using coqidetop with xml and serapi with s-expressions (serapi and e-pycoq might be able to use the same interface). This requires experimentation.
 
 
+# Kernel implementation
+
+It turns out using stdin, stout, and stderr from asyncio subprocesses can result in deadlock if the subprocess buffers stdout or stderr. This is because the subprocess will block on writing to stdout or stderr if the buffers are full. However, the buffers will never be emptied because the main process is still trying to write to stdin.
+
+I originally thought to use the pexpect library. This also makes reading from serapi easier. However, this combines stdout and stderr into a single stream. This makes it harder to distinguish between the two. A workaround is to use an asyncio subprocess and then use pexpect to read from the stdout/stderr of the subprocess. This has the benefit of it being nice to read from, but still has the issue of deadlock. One way to get around this might be to read and write asynchronously using asyncio. This might be a bit more complicated though.
+
+
 # LSP vs SERAPI
 
 ## LSP pros
