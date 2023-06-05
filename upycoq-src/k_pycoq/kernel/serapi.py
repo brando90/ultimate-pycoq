@@ -17,7 +17,7 @@ from k_pycoq.opam import create_opam_subprocess
 
 from pexpect import fdpexpect
 
-from sexpdata import parse, Symbol
+from sexpdata import parse, dumps, Symbol
 
 # from asyncio import StreamWriter
 
@@ -114,7 +114,7 @@ def parse_reply(S_expr):
 
     def parse_list(l):
         if len(l) == 0:
-            return None
+            return []
         elif len(l) == 1:
             return parse_expr(l[0])
         elif isinstance(l[0], list):
@@ -175,14 +175,14 @@ class SerapiKernel(AbstractKernel):
         self.opam_root = opam_root
         self.flags: List[str] = _process_flags(flags)
         self.top_file: str = top_file
-        self._process = None
+        self._process: pexpect.spawn = None
 
     def start(self):
         command = f'sertop {" ".join(self.flags)} --topfile {self.top_file}'
 
         self._process = create_opam_subprocess(command, self.opam_switch, self.opam_root)
-        # import sys
-        # self._process.logfile = sys.stdout
+        import sys
+        self._process.logfile = sys.stdout
 
     def terminate(self):
         # TODO: check if this is the right way to terminate a process (see original implementation from brando)
@@ -192,15 +192,13 @@ class SerapiKernel(AbstractKernel):
         """ writes data to kernel input """
         self._process.send(data)
         self._process.send('\n')
-        # self._writer.write(data)
-        # self._writer.write('\n')
 
     def _read_response(self):
         """ reads serapi response from kernel stdout """
         self._process.expect(REPLY_PATTERN)
         answers = parse_reply(self._process.match.group())
         command_tag = answers[0]['Answer'][0]
-        return command_tag, answers
+        return command_tag, answers[1:-1]
 
     def add(self, statement: str):
         """adds statement to kernel"""
@@ -209,12 +207,21 @@ class SerapiKernel(AbstractKernel):
 
     def query(self, statement: str):
         """queries statement to kernel"""
-        self._write(f'(Query "{statement}")')
+        if statement == 'Proof':
+            _, reply = self.add('Show Proof.')
+            return self.exec(reply[0]['Answer'][1]['Added'][0])
+
+        self._write(f'(Query () "{statement}")')
         return self._read_response()
 
     def exec(self, statement_id: int):
         """executes statement"""
         self._write(f'(Exec {statement_id})')
+        return self._read_response()
+
+    def cancel(self, statement_ids: List[int]):
+        """cancels statement"""
+        self._write(f'(Cancel {dumps(statement_ids)})')
         return self._read_response()
 
 
@@ -252,8 +259,11 @@ if __name__ == '__main__':
         try:
             kernel.start()
             for statement in project.build_order[0].coq_statements():
-                print(statement)
-                print(kernel.add(statement))
+                # print(statement)
+                kernel.add(statement)
+                kernel.query('Proof')
+                # print(kernel.add(statement))
+                # print(kernel.query('Proof'))
 
         except Exception as e:
             print(e)

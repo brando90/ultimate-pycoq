@@ -9,53 +9,59 @@ import pexpect
 import os
 
 
-def wrap_command(command: str, switch: str) -> str:
+def wrap_command(command: str, switch: str, shell: bool = False):
     """Wraps command so it is executed in switch
 
     :param command: command to wrap
     :param switch: opam switch to run command in
+    :param shell: whether to run command in shell
     :return: wrapped command
     """
-    # set -e makes the shell exit if any command fails (returns non-zero exit code)
-    # This is so commands can output to stderr, but ignored if no non-zero error code was returned
-    command = 'set -e; ' + command
+    if shell:
+        # set -e makes the shell exit if any command fails (returns non-zero exit code)
+        # This is so commands can output to stderr, but ignored if no non-zero error code was returned
+        command = 'set -e; ' + command
 
-    return f'opam exec --switch {switch} -- sh -c {shlex.quote(command)}'
+        return f'opam exec --switch {switch} -- sh -c {shlex.quote(command)}'
+    else:
+        return f'opam exec --switch {switch} -- {command}'.split()
 
 
-def create_opam_subprocess(command: str, switch: str, cwd: Path, **kwargs) -> pexpect.spawn:
+def create_opam_subprocess(command: str, switch: str, cwd: Path, shell: bool = False, **kwargs) -> subprocess.Popen:
     """Creates a subprocess object for running an async command in an opam switch.
 
     :param command: command to run
     :param switch: opam switch to run command in
     :param cwd: current working directory
+    :param shell: whether to run command in shell
     :param kwargs: kwargs passed to asyncio.create_subprocess_exec
     :return: asyncio.subprocess.Process
     """
     check_switch_installed(switch, cwd)
 
-    opam_command: str = wrap_command(command, switch)
+    opam_command = wrap_command(command, switch, shell=shell)
 
-    opam_subprocess = pexpect.spawn(opam_command, cwd=cwd, encoding='utf-8', echo=False, **kwargs)
+    opam_subprocess = subprocess.Popen(opam_command, shell=shell, text=True, cwd=cwd, **kwargs)
 
     return opam_subprocess
 
 
-def run(command: str, switch: str, cwd: Path, **kwargs) -> CompletedProcess:
+def run(command: str, switch: str, cwd: Path, shell: bool = True, **kwargs) -> CompletedProcess:
     """Runs command with opam switch. Only throws an error if switch not found. Errors encountered while running
     command are returned in CompletedProcess.stderr.
 
     :param command: command to run
     :param switch: opam switch to run command in
     :param cwd: current working directory
+    :param shell: whether to run command in shell
     :param kwargs: kwargs passed to subprocess
     :return: list of subprocess.CompletedProcess objects
     """
     check_switch_installed(switch, cwd, **kwargs)
 
-    opam_command: str = wrap_command(command, switch)
+    opam_command: str = wrap_command(command, switch, shell=shell)
 
-    result = subprocess.run(opam_command, capture_output=True, shell=True, cwd=cwd, **kwargs)
+    result = subprocess.run(opam_command, capture_output=True, shell=shell, cwd=cwd, **kwargs)
 
     return result
 

@@ -1,0 +1,6 @@
+setuptools~=65.5.1
+pexpect~=4.8.0
+sexpdata~=0.0.4
+pydantic~=1.10.8
+aiofile~=3.8.5
+lark-parser~=0.12.0
