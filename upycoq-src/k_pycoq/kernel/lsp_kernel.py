@@ -127,7 +127,7 @@ JSONRPC_REQ_FORMAT = 'Content-Length: {content_length}\r\n\r\n{content}'
 
 
 class LSPEndPoint:
-    def __init__(self, lsp):
+    def __init__(self, lsp: subprocess.Popen):
         """Creates a new endpoint for communicating with lsp
         lsp: the subprocess to communicate with
         """
@@ -220,7 +220,13 @@ if __name__ == '__main__':
             'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith',
             'name': 'coq-lsp'
         }],
-        'trace': 'messages',
+        'initializationOptions': {
+            # 'trace': 'messages',
+            'debug': True,
+            # 'verbosity': 2,  # TODO: throws parsing error? think it must be an error with coqlsp
+            'show_notices_as_diagnostics': True,
+            'show_coq_info_messages': True,
+        },
         'clientInfo': {
             'name': 'pycoq',
             'version': '0.0.1'
