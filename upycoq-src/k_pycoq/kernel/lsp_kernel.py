@@ -4,42 +4,124 @@ interacting with Coq.
 """
 import subprocess
 import json
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from k_pycoq.kernel import AbstractKernel
 from k_pycoq.opam import create_opam_subprocess
-
+"""
 import k_pycoq.kernel.lsp_protocol as lsp_protocol
 
-_method_params = {
-    'initialize': lsp_protocol.InitializeParams,
-    'initialized': None,
+
+class MethodType(Enum):
+    Request = 1
+    Notification = 2
+
+
+_methods = {
+    'initialize': {
+        'kind': MethodType.Request,
+        'params': lsp_protocol.InitializeParams,
+        'result': lsp_protocol.InitializeResult,
+    },
+    'initialized': {
+        'kind': MethodType.Notification,
+        'params': None,
+    },
     # 'client/registerCapability': lsp_protocol.RegistrationParams,  # not planned atm
-    '$/setTrace': lsp_protocol.SetTraceParams,
-    '$/logTrace': lsp_protocol.LogTraceParams,
-    'textDocument/didOpen': lsp_protocol.DidOpenTextDocumentParams,
-    'textDocument/didChange': lsp_protocol.DidChangeTextDocumentParams,
-    'textDocument/didSave': lsp_protocol.DidSaveTextDocumentParams,
-    'textDocument/didClose': lsp_protocol.DidCloseTextDocumentParams,
+    '$/setTrace': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.SetTraceParams,
+    },
+    '$/logTrace': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.LogTraceParams,
+    },
+    'textDocument/didOpen': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.DidOpenTextDocumentParams,
+    },
+    'textDocument/didChange': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.DidChangeTextDocumentParams,
+    },
+    'textDocument/didSave': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.DidSaveTextDocumentParams,
+    },
+    'textDocument/didClose': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.DidCloseTextDocumentParams,
+    },
     # 'notebookDocument/didOpen': ...,  # planned
     # 'textDocument/declaration': ...,  # planned, blocked on upstream issues
-    'textDocument/definition': lsp_protocol.TextDocumentPositionParams,  # partial
+    'textDocument/definition': {  # partial
+        'kind': MethodType.Request,
+        'params': lsp_protocol.DefinitionParams,
+        'result': lsp_protocol.LocationResult,
+    },
     # 'textDocument/references': ...,  # planned, blocked on upstream issues
-    'textDocument/hover': lsp_protocol.HoverParams,
+    'textDocument/hover': {
+        'kind': MethodType.Request,
+        'params': lsp_protocol.HoverParams,
+        'result': lsp_protocol.HoverResult,
+    },
     # 'textDocument/codeLens': ...,
     # 'textDocument/foldingRange': ...,
-    'textDocument/documentSymbol': lsp_protocol.DocumentSymbolParams,
+    'textDocument/documentSymbol': {
+        'kind': MethodType.Request,
+        'params': lsp_protocol.DocumentSymbolParams,
+        'result': lsp_protocol.SymbolResult,
+    },
     # 'textDocument/semanticTokens': ...,  # planned
     # 'textDocument/inlineValues': ...,  # planned
     # 'textDocument/inlayHints': ...,  # planned
-    'textDocument/completion': lsp_protocol.CompletionParams, # partial
-    'textDocument/publishDiagnostics': lsp_protocol.PublishDiagnosticsParams,
+    'textDocument/completion': {  # partial
+        'kind': MethodType.Request,
+        'params': lsp_protocol.CompletionParams,
+        'result': lsp_protocol.CompletionResult,
+    },
+    'textDocument/publishDiagnostics': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.PublishDiagnosticsParams,
+    },
     # 'textDocument/diagnostics': ..., # planned
     # 'textDocument/codeAction': ..., # planned
-    'workspace/workspaceFolders': lsp_protocol.WorkspaceFoldersParams,  # folders should contain _CoqProject in root
-    'workspace/didChangeWorkspaceFolders': lsp_protocol.DidChangeWorkspaceFoldersParams,
+    'workspace/workspaceFolders': {  # folders should contain _CoqProject in root
+        'kind': MethodType.Notification,
+        'params': None,
+    },
+    'workspace/didChangeWorkspaceFolders': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.DidChangeWorkspaceFoldersParams,
+    },
+    # coq specific
+    'proof/goals': {
+        'kind': MethodType.Request,
+        'params': lsp_protocol.GoalsParams,
+        'result': lsp_protocol.GoalResult,
+    },
+    '$/coq/fileProgress': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.CoqFileProgressParams,
+    },
+    'coq/getDocument': {
+        'kind': MethodType.Request,
+        'params': lsp_protocol.FlecheDocumentParams,
+        'result': lsp_protocol.FlecheDocumentResult,
+    },
+    'coq/saveVo': {
+        'kind': MethodType.Request,
+        'params': lsp_protocol.FlecheSaveParams,
+        'result': None,
+    },
+    '$/coq/filePerfData': {
+        'kind': MethodType.Notification,
+        'params': lsp_protocol.DocumentPerfParams,
+    },
 }
+# """
 
 JSONRPC_REQ_FORMAT = 'Content-Length: {content_length}\r\n\r\n{content}'
 
@@ -63,7 +145,7 @@ class LSPEndPoint:
         self.lsp.stdin.write(self._add_header(content))
         self.lsp.stdin.flush()
 
-    def _parse_response(self):
+    def read_response(self):
         """parses response from lsp"""
         headers = {}
         while True:
@@ -90,7 +172,6 @@ class LSPEndPoint:
 
         content = self.lsp.stdout.read(headers['Content-Length'])
         print(f'RECEIVED: {content}')
-        content = json.loads(content)
         return content
 
     def send_request(self, method: str, params: dict[str: Any]):
@@ -100,7 +181,6 @@ class LSPEndPoint:
         print(f'REQUEST: {content}')
         self.lsp.stdin.write(self._add_header(content))
         self.lsp.stdin.flush()
-        return self._parse_response()
 
 
 class LSPKernel(AbstractKernel):
@@ -111,7 +191,7 @@ class LSPKernel(AbstractKernel):
         self.opam_root = opam_root
         self.flags: list[str] = flags
         self.top_file: str = top_file
-        self._lsp = create_opam_subprocess('coq-lsp', self.opam_switch, self.opam_root,
+        self._lsp = create_opam_subprocess('coq-lsp --bt', self.opam_switch, self.opam_root,
                                            stdin=subprocess.PIPE,
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.STDOUT)
@@ -131,6 +211,7 @@ if __name__ == '__main__':
     # lsp.stdin.flush()
     # print(lsp_endpoint._parse_response())
     import os
+
     pid = os.getpid()
 
     lsp_endpoint.send_request('initialize', {
@@ -139,6 +220,7 @@ if __name__ == '__main__':
             'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith',
             'name': 'coq-lsp'
         }],
+        'trace': 'messages',
         'clientInfo': {
             'name': 'pycoq',
             'version': '0.0.1'
@@ -155,8 +237,8 @@ if __name__ == '__main__':
         }
     })
 
-    lsp_endpoint._parse_response()
-    lsp_endpoint._parse_response()
+    lsp_endpoint.read_response()
+    lsp_endpoint.read_response()
 
     # wait for 0.1 sec
     # import time
@@ -174,18 +256,39 @@ if __name__ == '__main__':
     lsp_endpoint.send_notification('textDocument/didOpen', {
         'textDocument': {
             'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-                        '/SimpleArith.v',
+                   '/SimpleArith.v',
             'languageId': 'coq',
             'version': 1,
-            'text': 'Require Import Arith.\n\nGoal 1 + 1 = 2.\nProof.\n  reflexivity.\nQed.'
+            # 'text': 'Require Import Arith.\n\nDefinition a := 2.\nGoal 1 + 1 = 2.\nProof.\nShow Proof.\nreflexivity.\nQed.'
+            'text': """
+Theorem add_easy_induct_1:
+forall n:nat,
+  n + 0 = n.
+Proof.
+Show Proof. 
+  intros.
+Show Proof.
+  induction n as [| n' IH].
+Show Proof.
+  - simpl.
+Show Proof.
+    reflexivity.
+Show Proof.
+  - simpl.
+Show Proof.
+    rewrite -> IH.
+Show Proof.
+    reflexivity.
+Show Proof.
+Qed."""
         }
     })
 
     # textDocument/publishDiagnostics
-    # lsp_endpoint.send_notification('coq/getDocument', {
-    #     'textDocument': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-    #                     '/SimpleArith.v'
-    # })
+    lsp_endpoint.send_notification('coq/getDocument', {
+        'textDocument': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+                        '/SimpleArith.v'
+    })
 
     # interface GoalRequest {
     #     textDocument: VersionedTextDocumentIdentifier;
@@ -193,6 +296,18 @@ if __name__ == '__main__':
     #     pp_format?: 'Pp' | 'Str';
     # }
 
+    # lsp_endpoint.send_request('textDocument/definition', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                '/SimpleArith.v',
+    #         'languageId': 'coq',
+    #         'version': 1
+    #     },
+    #     'position': {
+    #         'line': 2,
+    #         'character': 11
+    #     }
+    # })
     # lsp_endpoint.send_request('proof/goals', {
     #     'textDocument': {
     #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
@@ -201,11 +316,11 @@ if __name__ == '__main__':
     #         'version': 1
     #     },
     #     'position': {
-    #         'line': 4,
+    #         'line': 6,
     #         'character': 0
     #     }
     # })
-
+    # #
     lsp_endpoint.send_request('coq/getDocument', {
         'textDocument': {
             'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
@@ -215,7 +330,13 @@ if __name__ == '__main__':
         }
     })
 
-
+    # lsp_endpoint.send_request('coq/saveVo', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                  '/SimpleArith.v',
+    #         'version': 1
+    #     }
+    # })
 
     # lsp_endpoint.send_notification('initialized', {})
 
@@ -241,5 +362,3 @@ if __name__ == '__main__':
         line = lsp.stdout.readline()
         if line != '':
             print(line, end='')
-
-
