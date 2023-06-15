@@ -10,6 +10,7 @@ from typing import Any
 
 from k_pycoq.kernel import AbstractKernel
 from k_pycoq.opam import create_opam_subprocess
+
 """
 import k_pycoq.kernel.lsp_protocol as lsp_protocol
 
@@ -183,7 +184,10 @@ class LSPEndPoint:
         self.lsp.stdin.flush()
 
 
-class LSPKernel(AbstractKernel):
+class CoqLSPClient(AbstractClient):
+    # AbstractClient is from pygls https://github.com/openlawlibrary/pygls/tree/master
+    # todo: make it compatible with a python context manager/with stmt
+    # todo: I suggest to make this an asyncio obj
 
     def __init__(self, opam_switch: str, opam_root, top_file: str, flags: list[str]):
         super().__init__()
@@ -286,7 +290,8 @@ Show Proof.
 Show Proof.
     reflexivity.
 Show Proof.
-Qed."""
+Qed.
+"""
         }
     })
 
