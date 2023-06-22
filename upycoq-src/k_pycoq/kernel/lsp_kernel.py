@@ -220,7 +220,13 @@ if __name__ == '__main__':
             'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith',
             'name': 'coq-lsp'
         }],
-        'trace': 'messages',
+        'initializationOptions': {
+            # 'trace': 'messages',
+            'debug': True,
+            # 'verbosity': 2,  # TODO: throws parsing error? think it must be an error with coqlsp
+            # 'show_notices_as_diagnostics': True,
+            'show_coq_info_messages': True,
+        },
         'clientInfo': {
             'name': 'pycoq',
             'version': '0.0.1'
@@ -253,6 +259,27 @@ if __name__ == '__main__':
     #     0,
     #     "Definition a := 3."
 
+    # lsp_endpoint.send_notification('textDocument/didOpen', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                '/SimpleArith.v',
+    #         'languageId': 'coq',
+    #         'version': 1,
+    #         # 'text': 'Require Import Arith.\n\nDefinition a := 2.\nGoal 1 + 1 = 2.\nProof.\nShow Proof.\nreflexivity.\nQed.'
+    #         'text': """
+    # Theorem add_easy_induct_1:
+    # forall n:nat,
+    #   n + 0 = n.
+    # Proof.
+    # Show Proof.
+    #   intros.
+    # Show Proof.
+    #   induction n as [| n' IH].
+    # Show Proof.
+    #   - simpl."""
+    #     }
+    # })
+
     lsp_endpoint.send_notification('textDocument/didOpen', {
         'textDocument': {
             'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
@@ -261,34 +288,86 @@ if __name__ == '__main__':
             'version': 1,
             # 'text': 'Require Import Arith.\n\nDefinition a := 2.\nGoal 1 + 1 = 2.\nProof.\nShow Proof.\nreflexivity.\nQed.'
             'text': """
-Theorem add_easy_induct_1:
-forall n:nat,
-  n + 0 = n.
-Proof.
-Show Proof. 
-  intros.
-Show Proof.
-  induction n as [| n' IH].
-Show Proof.
-  - simpl.
-Show Proof.
-    reflexivity.
-Show Proof.
-  - simpl.
-Show Proof.
-    rewrite -> IH.
-Show Proof.
-    reflexivity.
-Show Proof.
-Qed."""
+        Theorem add_easy_induct_1:
+        forall n:nat,
+          n + 0 = n.
+        Proof.
+          intros.
+          induction n as [| n' IH].
+        Show Proof. 
+          - simpl.
+            reflexivity.
+          - simpl.
+            rewrite -> IH.
+            reflexivity.
+        Show Proof.
+        Qed."""
         }
     })
 
+    # wait 3 seconds
+    # import time
+    # time.sleep(3)
+    #
+    # print('---------------------')
+    #
+    # lsp_endpoint.send_notification('textDocument/didChange', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                '/SimpleArith.v',
+    #         'languageId': 'coq',
+    #         'version': 2,
+    #         # 'text': 'Require Import Arith.\n\nDefinition a := 2.\nGoal 1 + 1 = 2.\nProof.\nShow Proof.\nreflexivity.\nQed.'
+    #         'text': """
+    #     Theorem add_easy_induct_1:
+    #     forall n:nat,
+    #       n + 0 = n.
+    #     Proof.
+    #       intros.
+    #       induction n as [| n' IH].
+    #     Show Proof.
+    #       - simpl.
+    #         reflexivity.
+    #       - simpl.
+    #         rewrite -> IH.
+    #         reflexivity.
+    #     Show Proof.
+    #     Qed."""
+    #     }
+    # })
+
+    # lsp_endpoint.send_notification('textDocument/didOpen', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                '/SimpleArith.v',
+    #         'languageId': 'coq',
+    #         'version': 1,
+    #         # 'text': 'Require Import Arith.\n\nDefinition a := 2.\nGoal 1 + 1 = 2.\nProof.\nShow Proof.\nreflexivity.\nQed.'
+    #         'text': """
+    # Theorem add_easy_induct_1:
+    # forall n:nat,
+    #   n + 0 = n.
+    # Proof.
+    # Show Proof.
+    #   intros.
+    # Show Proof.
+    #   induction n as [| n' IH].
+    # Show Proof.
+    #   - simpl.
+    # Show Proof.
+    #     reflexivity.
+    # Show Proof.
+    #   - simpl.
+    # Show Proof.
+    #     rewrite -> IH.
+    # Show Proof.
+    #     reflexivity.
+    # Show Proof.
+    # Qed."""
+    #     }
+    # })
+
     # textDocument/publishDiagnostics
-    lsp_endpoint.send_notification('coq/getDocument', {
-        'textDocument': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-                        '/SimpleArith.v'
-    })
 
     # interface GoalRequest {
     #     textDocument: VersionedTextDocumentIdentifier;
@@ -296,39 +375,39 @@ Qed."""
     #     pp_format?: 'Pp' | 'Str';
     # }
 
-    # lsp_endpoint.send_request('textDocument/definition', {
-    #     'textDocument': {
-    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-    #                '/SimpleArith.v',
-    #         'languageId': 'coq',
-    #         'version': 1
-    #     },
-    #     'position': {
-    #         'line': 2,
-    #         'character': 11
-    #     }
-    # })
-    # lsp_endpoint.send_request('proof/goals', {
-    #     'textDocument': {
-    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-    #                '/SimpleArith.v',
-    #         'languageId': 'coq',
-    #         'version': 1
-    #     },
-    #     'position': {
-    #         'line': 6,
-    #         'character': 0
-    #     }
-    # })
-    # #
-    lsp_endpoint.send_request('coq/getDocument', {
+    lsp_endpoint.send_request('textDocument/definition', {
         'textDocument': {
             'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
                    '/SimpleArith.v',
             'languageId': 'coq',
             'version': 1
+        },
+        'position': {
+            'line': 7,
+            'character': 11
         }
     })
+    lsp_endpoint.send_request('proof/goals', {
+        'textDocument': {
+            'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+                   '/SimpleArith.v',
+            'languageId': 'coq',
+            'version': 1
+        },
+        'position': {
+            'line': 6,
+            'character': 0
+        }
+    })
+    # #
+    # lsp_endpoint.send_request('coq/getDocument', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                '/SimpleArith.v',
+    #         'languageId': 'coq',
+    #         'version': 1
+    #     }
+    # })
 
     # lsp_endpoint.send_request('coq/saveVo', {
     #     'textDocument': {
