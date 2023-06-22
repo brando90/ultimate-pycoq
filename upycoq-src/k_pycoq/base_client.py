@@ -167,8 +167,11 @@ class BaseClient:
         self.reader.close()
         self.writer.close()
 
-    def send_request(self, method: str, params):
-        """sends request through jsonrpc"""
+    def send_request(self, method: str, params, return_result: bool = False):
+        """Sends request through jsonrpc.
+
+        If return_result is true, the result of the request is returned. Note: will block until the result is received.
+        """
         if self.closed:
             raise Exception('Cannot send request on closed client')
 
@@ -178,6 +181,9 @@ class BaseClient:
         self.unfinished_requests.add(request.id)
         self.id += 1
         self.writer.send_message(request)
+
+        if return_result:
+            return self.get_response(request.id)
 
     def send_notification(self, method: str, params):
         """sends notification through jsonrpc"""

@@ -39,11 +39,11 @@ class LSPClient(BaseClient):
 """
 
 REQUEST = """
-def {python_method_name}(self, params: {params}) -> {result_type}:
+def {python_method_name}(self, params: {params}, return_result=False) -> {result_type}:
     \"\"\"
     Make a `{method_name}` request.
     {doc_string}\"\"\"
-    return self.send_request('{method_name}', params)
+    return self.send_request('{method_name}', params, return_result=return_result)
 """
 
 NOTIFICATION = """
@@ -51,7 +51,7 @@ def {python_method_name}(self, params: {params}) -> None:
     \"\"\"
     Make a `{method_name}` notification.
     {doc_string}\"\"\"
-    return self.send_notification('{method_name}', params)
+    self.send_notification('{method_name}', params)
 """
 
 
