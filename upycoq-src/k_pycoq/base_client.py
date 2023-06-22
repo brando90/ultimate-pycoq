@@ -151,6 +151,8 @@ class BaseClient:
         """Creates a new jsonrpc client"""
         self.reader = JSONRPCReader(stdin, self.handle_response)
         self.writer = JSONRPCWriter(stdout)
+        self.closed = False
+
         self.id = 0
         self.request_history: dict[Id, lsprotocol.types.REQUESTS] = {}
         self.notification_history: list[lsprotocol.types.NOTIFICATIONS] = []
@@ -160,8 +162,17 @@ class BaseClient:
         self.request_responses: dict[Id, lsprotocol.types.RESPONSES] = {}
         self.other_responses: list[lsprotocol.types.RESPONSES] = []
 
+    def close(self):
+        """Closes the client"""
+        self.closed = True
+        self.reader.close()
+        self.writer.close()
+
     def send_request(self, method: str, params):
         """sends request through jsonrpc"""
+        if self.closed:
+            raise Exception('Cannot send request on closed client')
+
         request_type = lsprotocol.types.METHOD_TO_TYPES[method]
         request = request_type(id=self.id, method=method, jsonrpc=self.jsonrpc_version, params=params)
         self.request_history[request.id] = request
@@ -171,6 +182,9 @@ class BaseClient:
 
     def send_notification(self, method: str, params):
         """sends notification through jsonrpc"""
+        if self.closed:
+            raise Exception('Cannot send request on closed client')
+
         notification_type = lsprotocol.types.METHOD_TO_TYPES[method]
         notification = notification_type(method=method, jsonrpc=self.jsonrpc_version, params=params)
         self.notification_history.append(notification)

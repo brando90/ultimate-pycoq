@@ -24,14 +24,6 @@ To regenerate file, run scripts/genclient.py
 from k_pycoq.base_client import BaseClient
 
 
-def check_stopped(func):
-    async def wrapper(self, *args, **kwargs):
-        if self.stopped:
-            raise RuntimeError("Client has been stopped.")
-        return await func(self, *args, **kwargs)
-    return wrapper
-
-
 class LSPClient(BaseClient):
     def __init__(
         self,
@@ -47,7 +39,6 @@ class LSPClient(BaseClient):
 """
 
 REQUEST = """
-@check_stopped
 def {python_method_name}(self, params: {params}) -> {result_type}:
     \"\"\"
     Make a `{method_name}` request.
@@ -56,7 +47,6 @@ def {python_method_name}(self, params: {params}) -> {result_type}:
 """
 
 NOTIFICATION = """
-@check_stopped
 def {python_method_name}(self, params: {params}) -> None:
     \"\"\"
     Make a `{method_name}` notification.
