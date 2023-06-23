@@ -114,14 +114,6 @@ from typing import (
 from k_pycoq.base_client import BaseClient
 
 
-def check_stopped(func):
-    async def wrapper(self, *args, **kwargs):
-        if self.stopped:
-            raise RuntimeError("Client has been stopped.")
-        return await func(self, *args, **kwargs)
-    return wrapper
-
-
 class LSPClient(BaseClient):
     def __init__(
         self,
@@ -134,8 +126,7 @@ class LSPClient(BaseClient):
         self.version = version
         super().__init__(stdin, stdout)
 
-    @check_stopped
-    async def call_hierarchy_incoming_calls(self, params: CallHierarchyIncomingCallsParams) -> Optional[List[CallHierarchyIncomingCall]]:
+    def call_hierarchy_incoming_calls(self, params: CallHierarchyIncomingCallsParams, return_result=False) -> Optional[List[CallHierarchyIncomingCall]]:
         """
         Make a `callHierarchy/incomingCalls` request.
     
@@ -143,10 +134,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_request('callHierarchy/incomingCalls', params)
+        return self.send_request('callHierarchy/incomingCalls', params, return_result=return_result)
 
-    @check_stopped
-    async def call_hierarchy_outgoing_calls(self, params: CallHierarchyOutgoingCallsParams) -> Optional[List[CallHierarchyOutgoingCall]]:
+    def call_hierarchy_outgoing_calls(self, params: CallHierarchyOutgoingCallsParams, return_result=False) -> Optional[List[CallHierarchyOutgoingCall]]:
         """
         Make a `callHierarchy/outgoingCalls` request.
     
@@ -154,10 +144,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_request('callHierarchy/outgoingCalls', params)
+        return self.send_request('callHierarchy/outgoingCalls', params, return_result=return_result)
 
-    @check_stopped
-    async def code_action_resolve(self, params: CodeAction) -> CodeAction:
+    def code_action_resolve(self, params: CodeAction, return_result=False) -> CodeAction:
         """
         Make a `codeAction/resolve` request.
     
@@ -166,19 +155,17 @@ class LSPClient(BaseClient):
 
         {@link CodeAction} or a Thenable that resolves to such.
         """
-        return await self.send_request('codeAction/resolve', params)
+        return self.send_request('codeAction/resolve', params, return_result=return_result)
 
-    @check_stopped
-    async def code_lens_resolve(self, params: CodeLens) -> CodeLens:
+    def code_lens_resolve(self, params: CodeLens, return_result=False) -> CodeLens:
         """
         Make a `codeLens/resolve` request.
     
         A request to resolve a command for a given code lens.
         """
-        return await self.send_request('codeLens/resolve', params)
+        return self.send_request('codeLens/resolve', params, return_result=return_result)
 
-    @check_stopped
-    async def completion_item_resolve(self, params: CompletionItem) -> CompletionItem:
+    def completion_item_resolve(self, params: CompletionItem, return_result=False) -> CompletionItem:
         """
         Make a `completionItem/resolve` request.
     
@@ -186,10 +173,9 @@ class LSPClient(BaseClient):
         item.The request's parameter is of type {@link CompletionItem} the response
         is of type {@link CompletionItem} or a Thenable that resolves to such.
         """
-        return await self.send_request('completionItem/resolve', params)
+        return self.send_request('completionItem/resolve', params, return_result=return_result)
 
-    @check_stopped
-    async def document_link_resolve(self, params: DocumentLink) -> DocumentLink:
+    def document_link_resolve(self, params: DocumentLink, return_result=False) -> DocumentLink:
         """
         Make a `documentLink/resolve` request.
     
@@ -198,10 +184,9 @@ class LSPClient(BaseClient):
         The request's parameter is of type {@link DocumentLink} the response
         is of type {@link DocumentLink} or a Thenable that resolves to such.
         """
-        return await self.send_request('documentLink/resolve', params)
+        return self.send_request('documentLink/resolve', params, return_result=return_result)
 
-    @check_stopped
-    async def initialize(self, params: InitializeParams) -> InitializeResult:
+    def initialize(self, params: InitializeParams, return_result=False) -> InitializeResult:
         """
         Make a `initialize` request.
     
@@ -212,10 +197,9 @@ class LSPClient(BaseClient):
         if of type {@link InitializeResult} of a Thenable that resolves to
         such.
         """
-        return await self.send_request('initialize', params)
+        return self.send_request('initialize', params, return_result=return_result)
 
-    @check_stopped
-    async def inlay_hint_resolve(self, params: InlayHint) -> InlayHint:
+    def inlay_hint_resolve(self, params: InlayHint, return_result=False) -> InlayHint:
         """
         Make a `inlayHint/resolve` request.
     
@@ -226,10 +210,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('inlayHint/resolve', params)
+        return self.send_request('inlayHint/resolve', params, return_result=return_result)
 
-    @check_stopped
-    async def shutdown(self, params: None) -> None:
+    def shutdown(self, params: None, return_result=False) -> None:
         """
         Make a `shutdown` request.
     
@@ -239,28 +222,25 @@ class LSPClient(BaseClient):
         only notification that is sent after a shutdown request is the exit
         event.
         """
-        return await self.send_request('shutdown', params)
+        return self.send_request('shutdown', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_code_action(self, params: CodeActionParams) -> Optional[List[Union[Command, CodeAction]]]:
+    def text_document_code_action(self, params: CodeActionParams, return_result=False) -> Optional[List[Union[CodeAction, Command]]]:
         """
         Make a `textDocument/codeAction` request.
     
         A request to provide commands for the given text document and range.
         """
-        return await self.send_request('textDocument/codeAction', params)
+        return self.send_request('textDocument/codeAction', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_code_lens(self, params: CodeLensParams) -> Optional[List[CodeLens]]:
+    def text_document_code_lens(self, params: CodeLensParams, return_result=False) -> Optional[List[CodeLens]]:
         """
         Make a `textDocument/codeLens` request.
     
         A request to provide code lens for the given text document.
         """
-        return await self.send_request('textDocument/codeLens', params)
+        return self.send_request('textDocument/codeLens', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_color_presentation(self, params: ColorPresentationParams) -> List[ColorPresentation]:
+    def text_document_color_presentation(self, params: ColorPresentationParams, return_result=False) -> List[ColorPresentation]:
         """
         Make a `textDocument/colorPresentation` request.
     
@@ -270,10 +250,9 @@ class LSPClient(BaseClient):
         the response is of type {@link ColorInformation ColorInformation[]}
         or a Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/colorPresentation', params)
+        return self.send_request('textDocument/colorPresentation', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_completion(self, params: CompletionParams) -> Optional[Union[List[CompletionItem], CompletionList]]:
+    def text_document_completion(self, params: CompletionParams, return_result=False) -> Optional[Union[CompletionList, List[CompletionItem]]]:
         """
         Make a `textDocument/completion` request.
     
@@ -290,10 +269,9 @@ class LSPClient(BaseClient):
         `filterText`, `insertText`, and `textEdit`, must not be changed
         during resolve.
         """
-        return await self.send_request('textDocument/completion', params)
+        return self.send_request('textDocument/completion', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_declaration(self, params: DeclarationParams) -> Optional[Union[List[LocationLink], Location, List[Location]]]:
+    def text_document_declaration(self, params: DeclarationParams, return_result=False) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
         """
         Make a `textDocument/declaration` request.
     
@@ -305,10 +283,9 @@ class LSPClient(BaseClient):
         Declaration} or a typed array of {@link DeclarationLink} or a
         Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/declaration', params)
+        return self.send_request('textDocument/declaration', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_definition(self, params: DefinitionParams) -> Optional[Union[List[LocationLink], Location, List[Location]]]:
+    def text_document_definition(self, params: DefinitionParams, return_result=False) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
         """
         Make a `textDocument/definition` request.
     
@@ -320,10 +297,9 @@ class LSPClient(BaseClient):
         Definition} or a typed array of {@link DefinitionLink} or a Thenable
         that resolves to such.
         """
-        return await self.send_request('textDocument/definition', params)
+        return self.send_request('textDocument/definition', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_diagnostic(self, params: DocumentDiagnosticParams) -> Union[RelatedFullDocumentDiagnosticReport, RelatedUnchangedDocumentDiagnosticReport]:
+    def text_document_diagnostic(self, params: DocumentDiagnosticParams, return_result=False) -> Union[RelatedUnchangedDocumentDiagnosticReport, RelatedFullDocumentDiagnosticReport]:
         """
         Make a `textDocument/diagnostic` request.
     
@@ -331,10 +307,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('textDocument/diagnostic', params)
+        return self.send_request('textDocument/diagnostic', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_document_color(self, params: DocumentColorParams) -> List[ColorInformation]:
+    def text_document_document_color(self, params: DocumentColorParams, return_result=False) -> List[ColorInformation]:
         """
         Make a `textDocument/documentColor` request.
     
@@ -344,10 +319,9 @@ class LSPClient(BaseClient):
         response is of type {@link ColorInformation ColorInformation[]} or a
         Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/documentColor', params)
+        return self.send_request('textDocument/documentColor', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_document_highlight(self, params: DocumentHighlightParams) -> Optional[List[DocumentHighlight]]:
+    def text_document_document_highlight(self, params: DocumentHighlightParams, return_result=False) -> Optional[List[DocumentHighlight]]:
         """
         Make a `textDocument/documentHighlight` request.
     
@@ -359,19 +333,17 @@ class LSPClient(BaseClient):
         [DocumentHighlight[]] (#DocumentHighlight) or a Thenable that
         resolves to such.
         """
-        return await self.send_request('textDocument/documentHighlight', params)
+        return self.send_request('textDocument/documentHighlight', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_document_link(self, params: DocumentLinkParams) -> Optional[List[DocumentLink]]:
+    def text_document_document_link(self, params: DocumentLinkParams, return_result=False) -> Optional[List[DocumentLink]]:
         """
         Make a `textDocument/documentLink` request.
     
         A request to provide document links.
         """
-        return await self.send_request('textDocument/documentLink', params)
+        return self.send_request('textDocument/documentLink', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_document_symbol(self, params: DocumentSymbolParams) -> Optional[Union[List[SymbolInformation], List[DocumentSymbol]]]:
+    def text_document_document_symbol(self, params: DocumentSymbolParams, return_result=False) -> Optional[Union[List[DocumentSymbol], List[SymbolInformation]]]:
         """
         Make a `textDocument/documentSymbol` request.
     
@@ -381,10 +353,9 @@ class LSPClient(BaseClient):
         the response is of type {@link SymbolInformation
         SymbolInformation[]} or a Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/documentSymbol', params)
+        return self.send_request('textDocument/documentSymbol', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_folding_range(self, params: FoldingRangeParams) -> Optional[List[FoldingRange]]:
+    def text_document_folding_range(self, params: FoldingRangeParams, return_result=False) -> Optional[List[FoldingRange]]:
         """
         Make a `textDocument/foldingRange` request.
     
@@ -394,19 +365,17 @@ class LSPClient(BaseClient):
         response is of type {@link FoldingRangeList} or a Thenable that
         resolves to such.
         """
-        return await self.send_request('textDocument/foldingRange', params)
+        return self.send_request('textDocument/foldingRange', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_formatting(self, params: DocumentFormattingParams) -> Optional[List[TextEdit]]:
+    def text_document_formatting(self, params: DocumentFormattingParams, return_result=False) -> Optional[List[TextEdit]]:
         """
         Make a `textDocument/formatting` request.
     
         A request to to format a whole document.
         """
-        return await self.send_request('textDocument/formatting', params)
+        return self.send_request('textDocument/formatting', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_hover(self, params: HoverParams) -> Optional[Hover]:
+    def text_document_hover(self, params: HoverParams, return_result=False) -> Optional[Hover]:
         """
         Make a `textDocument/hover` request.
     
@@ -416,10 +385,9 @@ class LSPClient(BaseClient):
         response is of type {@link Hover} or a Thenable that resolves to
         such.
         """
-        return await self.send_request('textDocument/hover', params)
+        return self.send_request('textDocument/hover', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_implementation(self, params: ImplementationParams) -> Optional[Union[List[LocationLink], Location, List[Location]]]:
+    def text_document_implementation(self, params: ImplementationParams, return_result=False) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
         """
         Make a `textDocument/implementation` request.
     
@@ -430,10 +398,9 @@ class LSPClient(BaseClient):
         (#TextDocumentPositionParams) the response is of type {@link
         Definition} or a Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/implementation', params)
+        return self.send_request('textDocument/implementation', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_inlay_hint(self, params: InlayHintParams) -> Optional[List[InlayHint]]:
+    def text_document_inlay_hint(self, params: InlayHintParams, return_result=False) -> Optional[List[InlayHint]]:
         """
         Make a `textDocument/inlayHint` request.
     
@@ -444,10 +411,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('textDocument/inlayHint', params)
+        return self.send_request('textDocument/inlayHint', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_inline_value(self, params: InlineValueParams) -> Optional[List[Union[InlineValueEvaluatableExpression, InlineValueVariableLookup, InlineValueText]]]:
+    def text_document_inline_value(self, params: InlineValueParams, return_result=False) -> Optional[List[Union[InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression]]]:
         """
         Make a `textDocument/inlineValue` request.
     
@@ -458,10 +424,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('textDocument/inlineValue', params)
+        return self.send_request('textDocument/inlineValue', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_linked_editing_range(self, params: LinkedEditingRangeParams) -> Optional[LinkedEditingRanges]:
+    def text_document_linked_editing_range(self, params: LinkedEditingRangeParams, return_result=False) -> Optional[LinkedEditingRanges]:
         """
         Make a `textDocument/linkedEditingRange` request.
     
@@ -469,10 +434,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_request('textDocument/linkedEditingRange', params)
+        return self.send_request('textDocument/linkedEditingRange', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_moniker(self, params: MonikerParams) -> Optional[List[Moniker]]:
+    def text_document_moniker(self, params: MonikerParams, return_result=False) -> Optional[List[Moniker]]:
         """
         Make a `textDocument/moniker` request.
     
@@ -482,19 +446,17 @@ class LSPClient(BaseClient):
         The request parameter is of type {@link TextDocumentPositionParams}.
         The response is of type {@link Moniker Moniker[]} or `null`.
         """
-        return await self.send_request('textDocument/moniker', params)
+        return self.send_request('textDocument/moniker', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_on_type_formatting(self, params: DocumentOnTypeFormattingParams) -> Optional[List[TextEdit]]:
+    def text_document_on_type_formatting(self, params: DocumentOnTypeFormattingParams, return_result=False) -> Optional[List[TextEdit]]:
         """
         Make a `textDocument/onTypeFormatting` request.
     
         A request to format a document on type.
         """
-        return await self.send_request('textDocument/onTypeFormatting', params)
+        return self.send_request('textDocument/onTypeFormatting', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_prepare_call_hierarchy(self, params: CallHierarchyPrepareParams) -> Optional[List[CallHierarchyItem]]:
+    def text_document_prepare_call_hierarchy(self, params: CallHierarchyPrepareParams, return_result=False) -> Optional[List[CallHierarchyItem]]:
         """
         Make a `textDocument/prepareCallHierarchy` request.
     
@@ -504,10 +466,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_request('textDocument/prepareCallHierarchy', params)
+        return self.send_request('textDocument/prepareCallHierarchy', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_prepare_rename(self, params: PrepareRenameParams) -> Optional[Union[PrepareRenameResult_Type1, PrepareRenameResult_Type2, Range]]:
+    def text_document_prepare_rename(self, params: PrepareRenameParams, return_result=False) -> Optional[Union[PrepareRenameResult_Type2, PrepareRenameResult_Type1, Range]]:
         """
         Make a `textDocument/prepareRename` request.
     
@@ -515,10 +476,9 @@ class LSPClient(BaseClient):
 
         @since 3.16 - support for default behavior
         """
-        return await self.send_request('textDocument/prepareRename', params)
+        return self.send_request('textDocument/prepareRename', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_prepare_type_hierarchy(self, params: TypeHierarchyPrepareParams) -> Optional[List[TypeHierarchyItem]]:
+    def text_document_prepare_type_hierarchy(self, params: TypeHierarchyPrepareParams, return_result=False) -> Optional[List[TypeHierarchyItem]]:
         """
         Make a `textDocument/prepareTypeHierarchy` request.
     
@@ -528,19 +488,17 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('textDocument/prepareTypeHierarchy', params)
+        return self.send_request('textDocument/prepareTypeHierarchy', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_range_formatting(self, params: DocumentRangeFormattingParams) -> Optional[List[TextEdit]]:
+    def text_document_range_formatting(self, params: DocumentRangeFormattingParams, return_result=False) -> Optional[List[TextEdit]]:
         """
         Make a `textDocument/rangeFormatting` request.
     
         A request to to format a range in a document.
         """
-        return await self.send_request('textDocument/rangeFormatting', params)
+        return self.send_request('textDocument/rangeFormatting', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_references(self, params: ReferenceParams) -> Optional[List[Location]]:
+    def text_document_references(self, params: ReferenceParams, return_result=False) -> Optional[List[Location]]:
         """
         Make a `textDocument/references` request.
     
@@ -550,19 +508,17 @@ class LSPClient(BaseClient):
 
         {@link Location Location[]} or a Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/references', params)
+        return self.send_request('textDocument/references', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_rename(self, params: RenameParams) -> Optional[WorkspaceEdit]:
+    def text_document_rename(self, params: RenameParams, return_result=False) -> Optional[WorkspaceEdit]:
         """
         Make a `textDocument/rename` request.
     
         A request to rename a symbol.
         """
-        return await self.send_request('textDocument/rename', params)
+        return self.send_request('textDocument/rename', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_selection_range(self, params: SelectionRangeParams) -> Optional[List[SelectionRange]]:
+    def text_document_selection_range(self, params: SelectionRangeParams, return_result=False) -> Optional[List[SelectionRange]]:
         """
         Make a `textDocument/selectionRange` request.
     
@@ -572,44 +528,39 @@ class LSPClient(BaseClient):
         response is of type {@link SelectionRange SelectionRange[]} or a
         Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/selectionRange', params)
+        return self.send_request('textDocument/selectionRange', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_semantic_tokens_full(self, params: SemanticTokensParams) -> Optional[SemanticTokens]:
+    def text_document_semantic_tokens_full(self, params: SemanticTokensParams, return_result=False) -> Optional[SemanticTokens]:
         """
         Make a `textDocument/semanticTokens/full` request.
     
         @since 3.16.0
         """
-        return await self.send_request('textDocument/semanticTokens/full', params)
+        return self.send_request('textDocument/semanticTokens/full', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_semantic_tokens_full_delta(self, params: SemanticTokensDeltaParams) -> Optional[Union[SemanticTokensDelta, SemanticTokens]]:
+    def text_document_semantic_tokens_full_delta(self, params: SemanticTokensDeltaParams, return_result=False) -> Optional[Union[SemanticTokens, SemanticTokensDelta]]:
         """
         Make a `textDocument/semanticTokens/full/delta` request.
     
         @since 3.16.0
         """
-        return await self.send_request('textDocument/semanticTokens/full/delta', params)
+        return self.send_request('textDocument/semanticTokens/full/delta', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_semantic_tokens_range(self, params: SemanticTokensRangeParams) -> Optional[SemanticTokens]:
+    def text_document_semantic_tokens_range(self, params: SemanticTokensRangeParams, return_result=False) -> Optional[SemanticTokens]:
         """
         Make a `textDocument/semanticTokens/range` request.
     
         @since 3.16.0
         """
-        return await self.send_request('textDocument/semanticTokens/range', params)
+        return self.send_request('textDocument/semanticTokens/range', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_signature_help(self, params: SignatureHelpParams) -> Optional[SignatureHelp]:
+    def text_document_signature_help(self, params: SignatureHelpParams, return_result=False) -> Optional[SignatureHelp]:
         """
         Make a `textDocument/signatureHelp` request.
         """
-        return await self.send_request('textDocument/signatureHelp', params)
+        return self.send_request('textDocument/signatureHelp', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_type_definition(self, params: TypeDefinitionParams) -> Optional[Union[List[LocationLink], Location, List[Location]]]:
+    def text_document_type_definition(self, params: TypeDefinitionParams, return_result=False) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
         """
         Make a `textDocument/typeDefinition` request.
     
@@ -620,10 +571,9 @@ class LSPClient(BaseClient):
         (#TextDocumentPositionParams) the response is of type {@link
         Definition} or a Thenable that resolves to such.
         """
-        return await self.send_request('textDocument/typeDefinition', params)
+        return self.send_request('textDocument/typeDefinition', params, return_result=return_result)
 
-    @check_stopped
-    async def text_document_will_save_wait_until(self, params: WillSaveTextDocumentParams) -> Optional[List[TextEdit]]:
+    def text_document_will_save_wait_until(self, params: WillSaveTextDocumentParams, return_result=False) -> Optional[List[TextEdit]]:
         """
         Make a `textDocument/willSaveWaitUntil` request.
     
@@ -636,10 +586,9 @@ class LSPClient(BaseClient):
         server constantly fails on this request. This is done to keep the
         save fast and reliable.
         """
-        return await self.send_request('textDocument/willSaveWaitUntil', params)
+        return self.send_request('textDocument/willSaveWaitUntil', params, return_result=return_result)
 
-    @check_stopped
-    async def type_hierarchy_subtypes(self, params: TypeHierarchySubtypesParams) -> Optional[List[TypeHierarchyItem]]:
+    def type_hierarchy_subtypes(self, params: TypeHierarchySubtypesParams, return_result=False) -> Optional[List[TypeHierarchyItem]]:
         """
         Make a `typeHierarchy/subtypes` request.
     
@@ -647,10 +596,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('typeHierarchy/subtypes', params)
+        return self.send_request('typeHierarchy/subtypes', params, return_result=return_result)
 
-    @check_stopped
-    async def type_hierarchy_supertypes(self, params: TypeHierarchySupertypesParams) -> Optional[List[TypeHierarchyItem]]:
+    def type_hierarchy_supertypes(self, params: TypeHierarchySupertypesParams, return_result=False) -> Optional[List[TypeHierarchyItem]]:
         """
         Make a `typeHierarchy/supertypes` request.
     
@@ -658,10 +606,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('typeHierarchy/supertypes', params)
+        return self.send_request('typeHierarchy/supertypes', params, return_result=return_result)
 
-    @check_stopped
-    async def workspace_diagnostic(self, params: WorkspaceDiagnosticParams) -> WorkspaceDiagnosticReport:
+    def workspace_diagnostic(self, params: WorkspaceDiagnosticParams, return_result=False) -> WorkspaceDiagnosticReport:
         """
         Make a `workspace/diagnostic` request.
     
@@ -669,10 +616,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('workspace/diagnostic', params)
+        return self.send_request('workspace/diagnostic', params, return_result=return_result)
 
-    @check_stopped
-    async def workspace_execute_command(self, params: ExecuteCommandParams) -> Optional[Any]:
+    def workspace_execute_command(self, params: ExecuteCommandParams, return_result=False) -> Optional[Any]:
         """
         Make a `workspace/executeCommand` request.
     
@@ -681,10 +627,9 @@ class LSPClient(BaseClient):
         The request might return a workspace edit which the client will
         apply to the workspace.
         """
-        return await self.send_request('workspace/executeCommand', params)
+        return self.send_request('workspace/executeCommand', params, return_result=return_result)
 
-    @check_stopped
-    async def workspace_symbol(self, params: WorkspaceSymbolParams) -> Optional[Union[List[SymbolInformation], List[WorkspaceSymbol]]]:
+    def workspace_symbol(self, params: WorkspaceSymbolParams, return_result=False) -> Optional[Union[List[SymbolInformation], List[WorkspaceSymbol]]]:
         """
         Make a `workspace/symbol` request.
     
@@ -696,10 +641,9 @@ class LSPClient(BaseClient):
          need to advertise support for WorkspaceSymbols via the client capability
          `workspace.symbol.resolveSupport`.
         """
-        return await self.send_request('workspace/symbol', params)
+        return self.send_request('workspace/symbol', params, return_result=return_result)
 
-    @check_stopped
-    async def workspace_symbol_resolve(self, params: WorkspaceSymbol) -> WorkspaceSymbol:
+    def workspace_symbol_resolve(self, params: WorkspaceSymbol, return_result=False) -> WorkspaceSymbol:
         """
         Make a `workspaceSymbol/resolve` request.
     
@@ -707,10 +651,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_request('workspaceSymbol/resolve', params)
+        return self.send_request('workspaceSymbol/resolve', params, return_result=return_result)
 
-    @check_stopped
-    async def workspace_will_create_files(self, params: CreateFilesParams) -> Optional[WorkspaceEdit]:
+    def workspace_will_create_files(self, params: CreateFilesParams, return_result=False) -> Optional[WorkspaceEdit]:
         """
         Make a `workspace/willCreateFiles` request.
     
@@ -720,10 +663,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_request('workspace/willCreateFiles', params)
+        return self.send_request('workspace/willCreateFiles', params, return_result=return_result)
 
-    @check_stopped
-    async def workspace_will_delete_files(self, params: DeleteFilesParams) -> Optional[WorkspaceEdit]:
+    def workspace_will_delete_files(self, params: DeleteFilesParams, return_result=False) -> Optional[WorkspaceEdit]:
         """
         Make a `workspace/willDeleteFiles` request.
     
@@ -732,10 +674,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_request('workspace/willDeleteFiles', params)
+        return self.send_request('workspace/willDeleteFiles', params, return_result=return_result)
 
-    @check_stopped
-    async def workspace_will_rename_files(self, params: RenameFilesParams) -> Optional[WorkspaceEdit]:
+    def workspace_will_rename_files(self, params: RenameFilesParams, return_result=False) -> Optional[WorkspaceEdit]:
         """
         Make a `workspace/willRenameFiles` request.
     
@@ -745,27 +686,24 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_request('workspace/willRenameFiles', params)
+        return self.send_request('workspace/willRenameFiles', params, return_result=return_result)
 
-    @check_stopped
-    async def cancel_request(self, params: CancelParams) -> None:
+    def cancel_request(self, params: CancelParams) -> None:
         """
         Make a `$/cancelRequest` notification.
         """
-        return await self.send_notification('$/cancelRequest', params)
+        self.send_notification('$/cancelRequest', params)
 
-    @check_stopped
-    async def exit(self, params: None) -> None:
+    def exit(self, params: None) -> None:
         """
         Make a `exit` notification.
     
         The exit event is sent from the client to the server to ask the server
         to exit its process.
         """
-        return await self.send_notification('exit', params)
+        self.send_notification('exit', params)
 
-    @check_stopped
-    async def initialized(self, params: InitializedParams) -> None:
+    def initialized(self, params: InitializedParams) -> None:
         """
         Make a `initialized` notification.
     
@@ -773,17 +711,15 @@ class LSPClient(BaseClient):
         the client is fully initialized and the server is allowed to send requests
         from the server to the client.
         """
-        return await self.send_notification('initialized', params)
+        self.send_notification('initialized', params)
 
-    @check_stopped
-    async def notebook_document_did_change(self, params: DidChangeNotebookDocumentParams) -> None:
+    def notebook_document_did_change(self, params: DidChangeNotebookDocumentParams) -> None:
         """
         Make a `notebookDocument/didChange` notification.
         """
-        return await self.send_notification('notebookDocument/didChange', params)
+        self.send_notification('notebookDocument/didChange', params)
 
-    @check_stopped
-    async def notebook_document_did_close(self, params: DidCloseNotebookDocumentParams) -> None:
+    def notebook_document_did_close(self, params: DidCloseNotebookDocumentParams) -> None:
         """
         Make a `notebookDocument/didClose` notification.
     
@@ -791,10 +727,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_notification('notebookDocument/didClose', params)
+        self.send_notification('notebookDocument/didClose', params)
 
-    @check_stopped
-    async def notebook_document_did_open(self, params: DidOpenNotebookDocumentParams) -> None:
+    def notebook_document_did_open(self, params: DidOpenNotebookDocumentParams) -> None:
         """
         Make a `notebookDocument/didOpen` notification.
     
@@ -802,10 +737,9 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_notification('notebookDocument/didOpen', params)
+        self.send_notification('notebookDocument/didOpen', params)
 
-    @check_stopped
-    async def notebook_document_did_save(self, params: DidSaveNotebookDocumentParams) -> None:
+    def notebook_document_did_save(self, params: DidSaveNotebookDocumentParams) -> None:
         """
         Make a `notebookDocument/didSave` notification.
     
@@ -813,34 +747,30 @@ class LSPClient(BaseClient):
 
         @since 3.17.0
         """
-        return await self.send_notification('notebookDocument/didSave', params)
+        self.send_notification('notebookDocument/didSave', params)
 
-    @check_stopped
-    async def progress(self, params: ProgressParams) -> None:
+    def progress(self, params: ProgressParams) -> None:
         """
         Make a `$/progress` notification.
         """
-        return await self.send_notification('$/progress', params)
+        self.send_notification('$/progress', params)
 
-    @check_stopped
-    async def set_trace(self, params: SetTraceParams) -> None:
+    def set_trace(self, params: SetTraceParams) -> None:
         """
         Make a `$/setTrace` notification.
         """
-        return await self.send_notification('$/setTrace', params)
+        self.send_notification('$/setTrace', params)
 
-    @check_stopped
-    async def text_document_did_change(self, params: DidChangeTextDocumentParams) -> None:
+    def text_document_did_change(self, params: DidChangeTextDocumentParams) -> None:
         """
         Make a `textDocument/didChange` notification.
     
         The document change notification is sent from the client to the server
         to signal changes to a text document.
         """
-        return await self.send_notification('textDocument/didChange', params)
+        self.send_notification('textDocument/didChange', params)
 
-    @check_stopped
-    async def text_document_did_close(self, params: DidCloseTextDocumentParams) -> None:
+    def text_document_did_close(self, params: DidCloseTextDocumentParams) -> None:
         """
         Make a `textDocument/didClose` notification.
     
@@ -854,10 +784,9 @@ class LSPClient(BaseClient):
         doesn't mean that the document was open in an editor before. A close
         notification requires a previous open notification to be sent.
         """
-        return await self.send_notification('textDocument/didClose', params)
+        self.send_notification('textDocument/didClose', params)
 
-    @check_stopped
-    async def text_document_did_open(self, params: DidOpenTextDocumentParams) -> None:
+    def text_document_did_open(self, params: DidOpenTextDocumentParams) -> None:
         """
         Make a `textDocument/didOpen` notification.
     
@@ -872,40 +801,36 @@ class LSPClient(BaseClient):
         close notification send before. This means open and close
         notification must be balanced and the max open count is one.
         """
-        return await self.send_notification('textDocument/didOpen', params)
+        self.send_notification('textDocument/didOpen', params)
 
-    @check_stopped
-    async def text_document_did_save(self, params: DidSaveTextDocumentParams) -> None:
+    def text_document_did_save(self, params: DidSaveTextDocumentParams) -> None:
         """
         Make a `textDocument/didSave` notification.
     
         The document save notification is sent from the client to the server
         when the document got saved in the client.
         """
-        return await self.send_notification('textDocument/didSave', params)
+        self.send_notification('textDocument/didSave', params)
 
-    @check_stopped
-    async def text_document_will_save(self, params: WillSaveTextDocumentParams) -> None:
+    def text_document_will_save(self, params: WillSaveTextDocumentParams) -> None:
         """
         Make a `textDocument/willSave` notification.
     
         A document will save notification is sent from the client to the server
         before the document is actually saved.
         """
-        return await self.send_notification('textDocument/willSave', params)
+        self.send_notification('textDocument/willSave', params)
 
-    @check_stopped
-    async def window_work_done_progress_cancel(self, params: WorkDoneProgressCancelParams) -> None:
+    def window_work_done_progress_cancel(self, params: WorkDoneProgressCancelParams) -> None:
         """
         Make a `window/workDoneProgress/cancel` notification.
     
         The `window/workDoneProgress/cancel` notification is sent from  the
         client to the server to cancel a progress initiated on the server side.
         """
-        return await self.send_notification('window/workDoneProgress/cancel', params)
+        self.send_notification('window/workDoneProgress/cancel', params)
 
-    @check_stopped
-    async def workspace_did_change_configuration(self, params: DidChangeConfigurationParams) -> None:
+    def workspace_did_change_configuration(self, params: DidChangeConfigurationParams) -> None:
         """
         Make a `workspace/didChangeConfiguration` notification.
     
@@ -915,30 +840,27 @@ class LSPClient(BaseClient):
         The notification contains the changed configuration as defined by
         the language client.
         """
-        return await self.send_notification('workspace/didChangeConfiguration', params)
+        self.send_notification('workspace/didChangeConfiguration', params)
 
-    @check_stopped
-    async def workspace_did_change_watched_files(self, params: DidChangeWatchedFilesParams) -> None:
+    def workspace_did_change_watched_files(self, params: DidChangeWatchedFilesParams) -> None:
         """
         Make a `workspace/didChangeWatchedFiles` notification.
     
         The watched files notification is sent from the client to the server
         when the client detects changes to file watched by the language client.
         """
-        return await self.send_notification('workspace/didChangeWatchedFiles', params)
+        self.send_notification('workspace/didChangeWatchedFiles', params)
 
-    @check_stopped
-    async def workspace_did_change_workspace_folders(self, params: DidChangeWorkspaceFoldersParams) -> None:
+    def workspace_did_change_workspace_folders(self, params: DidChangeWorkspaceFoldersParams) -> None:
         """
         Make a `workspace/didChangeWorkspaceFolders` notification.
     
         The `workspace/didChangeWorkspaceFolders` notification is sent from the
         client to the server when the workspace folder configuration changes.
         """
-        return await self.send_notification('workspace/didChangeWorkspaceFolders', params)
+        self.send_notification('workspace/didChangeWorkspaceFolders', params)
 
-    @check_stopped
-    async def workspace_did_create_files(self, params: CreateFilesParams) -> None:
+    def workspace_did_create_files(self, params: CreateFilesParams) -> None:
         """
         Make a `workspace/didCreateFiles` notification.
     
@@ -947,10 +869,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_notification('workspace/didCreateFiles', params)
+        self.send_notification('workspace/didCreateFiles', params)
 
-    @check_stopped
-    async def workspace_did_delete_files(self, params: DeleteFilesParams) -> None:
+    def workspace_did_delete_files(self, params: DeleteFilesParams) -> None:
         """
         Make a `workspace/didDeleteFiles` notification.
     
@@ -960,10 +881,9 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_notification('workspace/didDeleteFiles', params)
+        self.send_notification('workspace/didDeleteFiles', params)
 
-    @check_stopped
-    async def workspace_did_rename_files(self, params: RenameFilesParams) -> None:
+    def workspace_did_rename_files(self, params: RenameFilesParams) -> None:
         """
         Make a `workspace/didRenameFiles` notification.
     
@@ -972,5 +892,5 @@ class LSPClient(BaseClient):
 
         @since 3.16.0
         """
-        return await self.send_notification('workspace/didRenameFiles', params)
+        self.send_notification('workspace/didRenameFiles', params)
 
