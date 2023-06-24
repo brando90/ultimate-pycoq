@@ -43,13 +43,20 @@ def from_json(obj: Union[str, dict], method: str = None, converter=None) -> type
 def run_tests():
     """Test json conversion"""
     obj = types.ResponseErrorMessage(error=types.ResponseError(code=1, message='test'))
+    import cattrs
+    converter = cattrs.Converter()
+    print(converter.unstructure(obj))
     json_str = to_json(obj)
     assert json_str == '{"error": {"code": 1, "message": "test"}, "jsonrpc": "2.0"}'
     assert from_json(json_str) == obj
 
     obj = types.InitializeResponse(result=types.InitializeResult(capabilities=types.ServerCapabilities()), id=1)
-    json_str = to_json(obj, method='initialize')
+    json_str = to_json(obj)
     assert from_json(json_str, method='initialize') == obj
+
+    import timeit
+    print(timeit.timeit(lambda: to_json(obj), number=1000))
+    print(timeit.timeit(lambda: from_json(json_str, method='textDocument/didOpen'), number=1000))
 
     # test request
     obj = types.TextDocumentDidOpenNotification(
@@ -62,12 +69,17 @@ def run_tests():
             )
         ),
     )
-    json_str = to_json(obj, method='textDocument/didOpen')
+    json_str = to_json(obj)
     assert json_str == json.dumps({"params": {"textDocument": {"uri": "file:///path/to/file", "languageId": "python",
                                                                "version": 1, "text": "test"}},
                                    "method": "textDocument/didOpen",
                                    "jsonrpc": "2.0"})
     assert from_json(json_str, method='textDocument/didOpen') == obj
+
+    # timing test
+    import timeit
+    print(timeit.timeit(lambda: to_json(obj), number=1000))
+    print(timeit.timeit(lambda: from_json(json_str, method='textDocument/didOpen'), number=1000))
 
 
 if __name__ == '__main__':
