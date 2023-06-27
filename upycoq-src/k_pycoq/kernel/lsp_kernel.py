@@ -136,7 +136,7 @@ class LSPEndPoint:
 
     @staticmethod
     def _add_header(content: str):
-        return JSONRPC_REQ_FORMAT.format(content_length=len(content), content=content)
+        return JSONRPC_REQ_FORMAT.format(content_length=len(content), content=content).encode('utf-8')
 
     def send_notification(self, method: str, params: dict[str: Any]):
         """sends notification to lsp"""
@@ -149,7 +149,8 @@ class LSPEndPoint:
         """parses response from lsp"""
         headers = {}
         while True:
-            line = self.lsp.stdout.readline().strip()
+            # convert from bytes to string
+            line = self.lsp.stdout.readline().decode('utf-8').strip()
             if line == '':
                 break
 
@@ -170,7 +171,7 @@ class LSPEndPoint:
             raise Exception(f'Received invalid content length {headers["Content-Length"]} of '
                             f'type {type(headers["Content-Length"])}')
 
-        content = self.lsp.stdout.read(headers['Content-Length'])
+        content = self.lsp.stdout.read(headers['Content-Length']).decode('utf-8')
         print(f'RECEIVED: {content}')
         return content
 
@@ -294,13 +295,11 @@ if __name__ == '__main__':
         Proof.
           intros.
           induction n as [| n' IH].
-        Show Proof. 
           - simpl.
             reflexivity.
           - simpl.
             rewrite -> IH.
             reflexivity.
-        Show Proof.
         Qed."""
         }
     })
@@ -311,30 +310,29 @@ if __name__ == '__main__':
     #
     # print('---------------------')
     #
-    # lsp_endpoint.send_notification('textDocument/didChange', {
-    #     'textDocument': {
-    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-    #                '/SimpleArith.v',
-    #         'languageId': 'coq',
-    #         'version': 2,
-    #         # 'text': 'Require Import Arith.\n\nDefinition a := 2.\nGoal 1 + 1 = 2.\nProof.\nShow Proof.\nreflexivity.\nQed.'
-    #         'text': """
-    #     Theorem add_easy_induct_1:
-    #     forall n:nat,
-    #       n + 0 = n.
-    #     Proof.
-    #       intros.
-    #       induction n as [| n' IH].
-    #     Show Proof.
-    #       - simpl.
-    #         reflexivity.
-    #       - simpl.
-    #         rewrite -> IH.
-    #         reflexivity.
-    #     Show Proof.
-    #     Qed."""
-    #     }
-    # })
+    lsp_endpoint.send_notification('textDocument/didChange', {
+        'textDocument': {
+            'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+                   '/SimpleArith.v',
+            'languageId': 'coq',
+            'version': 2,
+            # 'text': 'Require Import Arith.\n\nDefinition a := 2.\nGoal 1 + 1 = 2.\nProof.\nShow Proof.\nreflexivity.\nQed.'
+            'text': """
+        Theorem add_easy_induct_1:
+        forall n:nat,
+          n + 0 = n.
+        Proof.
+          intros.
+          induction n as [| n' IH].
+        Show Proof.
+          - simpl.
+            reflexivity.
+          - simpl.
+            rewrite -> IH.
+            reflexivity.
+        Qed."""
+        }
+    })
 
     # lsp_endpoint.send_notification('textDocument/didOpen', {
     #     'textDocument': {
@@ -375,30 +373,30 @@ if __name__ == '__main__':
     #     pp_format?: 'Pp' | 'Str';
     # }
 
-    lsp_endpoint.send_request('textDocument/definition', {
-        'textDocument': {
-            'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-                   '/SimpleArith.v',
-            'languageId': 'coq',
-            'version': 1
-        },
-        'position': {
-            'line': 7,
-            'character': 11
-        }
-    })
-    lsp_endpoint.send_request('proof/goals', {
-        'textDocument': {
-            'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-                   '/SimpleArith.v',
-            'languageId': 'coq',
-            'version': 1
-        },
-        'position': {
-            'line': 6,
-            'character': 0
-        }
-    })
+    # lsp_endpoint.send_request('textDocument/definition', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                '/SimpleArith.v',
+    #         'languageId': 'coq',
+    #         'version': 1
+    #     },
+    #     'position': {
+    #         'line': 7,
+    #         'character': 11
+    #     }
+    # })
+    # lsp_endpoint.send_request('proof/goals', {
+    #     'textDocument': {
+    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+    #                '/SimpleArith.v',
+    #         'languageId': 'coq',
+    #         'version': 1
+    #     },
+    #     'position': {
+    #         'line': 6,
+    #         'character': 0
+    #     }
+    # })
     # #
     # lsp_endpoint.send_request('coq/getDocument', {
     #     'textDocument': {
@@ -409,13 +407,13 @@ if __name__ == '__main__':
     #     }
     # })
 
-    # lsp_endpoint.send_request('coq/saveVo', {
-    #     'textDocument': {
-    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-    #                  '/SimpleArith.v',
-    #         'version': 1
-    #     }
-    # })
+    lsp_endpoint.send_request('coq/saveVo', {
+        'textDocument': {
+            'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+                     '/SimpleArith.v',
+            'version': 1
+        }
+    })
 
     # lsp_endpoint.send_notification('initialized', {})
 
@@ -438,6 +436,6 @@ if __name__ == '__main__':
     # })
 
     while True:
-        line = lsp.stdout.readline()
+        line = lsp.stdout.readline().decode('utf-8')
         if line != '':
             print(line, end='')

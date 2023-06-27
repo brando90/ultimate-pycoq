@@ -1,8 +1,10 @@
 import argparse
 import re
+import sys
 import textwrap
 from collections import defaultdict
-from typing import Type, List, ForwardRef
+from pathlib import Path
+from typing import Type, List, ForwardRef, Optional, Union
 
 import attrs
 import typing_inspect
@@ -16,12 +18,15 @@ INDENT = ' '*4
 
 FILE_FORMAT = """\"\"\"
 ****** THIS IS A GENERATED FILE, DO NOT EDIT. ******
-To regenerate file, run scripts/genclient.py
+To regenerate file, run {build_command}
 \"\"\"
 
 {imports}
 
-from k_pycoq.base_client import BaseClient
+from pytp.base_client import BaseClient
+from pytp.lsp_config import LSPConfig, default_lsp_config
+
+Id = int
 
 
 class LSPClient(BaseClient):
@@ -31,10 +36,11 @@ class LSPClient(BaseClient):
         version: str,
         stdin,
         stdout,
+        config: LSPConfig = default_lsp_config,
     ):
         self.name = name
         self.version = version
-        super().__init__(stdin, stdout)
+        super().__init__(stdin, stdout, config)
 {methods}
 """
 
@@ -42,7 +48,12 @@ REQUEST = """
 def {python_method_name}(self, params: {params}, return_result=False) -> {result_type}:
     \"\"\"
     Make a `{method_name}` request.
-    {doc_string}\"\"\"
+    {doc_string}
+    :param params: The parameters to send with the request. An instance of `{params}`.
+    :param return_result: Whether to return the result of the request. If `True`, the method will block until the
+    result is received. If `False`, the method will return the request's id.
+    :return: The result of the request if `return_result` is `True`, otherwise the request's id.
+    \"\"\"
     return self.send_request('{method_name}', params, return_result=return_result)
 """
 
@@ -50,7 +61,10 @@ NOTIFICATION = """
 def {python_method_name}(self, params: {params}) -> None:
     \"\"\"
     Make a `{method_name}` notification.
-    {doc_string}\"\"\"
+    {doc_string}
+    :param params: The parameters to send with the notification. An instance of `{params}`.
+    :return: None
+    \"\"\"
     self.send_notification('{method_name}', params)
 """
 
@@ -128,7 +142,7 @@ def pythonic_method_name(method_name):
     return method_name
 
 
-def generate_client_code():
+def generate_client_code(build_command: str):
     """
     Generates the lsp client file from the lsprotocol description
     """
@@ -136,7 +150,7 @@ def generate_client_code():
     import_list: defaultdict[str, set[str]] = defaultdict(set)
     methods: list[str] = []
 
-    for method_name, types in METHOD_TO_TYPES.items():
+    for method_name, types in sorted(METHOD_TO_TYPES.items()):
         # we only care about messages the client sends
         if message_direction(method_name) == "serverToClient":
             continue
@@ -150,21 +164,29 @@ def generate_client_code():
             doc_string = request.__doc__.strip()
             doc_string = '\n' + INDENT + doc_string + '\n' + INDENT
 
-        param_name = resolve_type(params, import_list)
+        param_type_str = resolve_type(params, import_list)
 
         if response is None:
             method = NOTIFICATION.format(python_method_name=python_method_name, method_name=method_name,
-                                         params=param_name, doc_string=doc_string)
+                                         params=param_type_str, doc_string=doc_string)
         else:
-            response_name = resolve_type(attrs.fields(response).result.type, import_list)
+            # TODO: temporary hack, currently uses Optional for all responses, ideally, we would use a sentile value
+            #  to indicate a null value and reserve None for missing values
+            root_type = attrs.fields(response).result.type
+            response_type_str = resolve_type(root_type, import_list)
+
+            # add Id to the end of the response type
+            if response_type_str.startswith('Union'):
+                response_type_str = response_type_str[:-1] + ', Id]'
+            else:
+                response_type_str = f'Union[{response_type_str}, Id]'
             method = REQUEST.format(python_method_name=python_method_name, method_name=method_name,
-                                    params=param_name, doc_string=doc_string, result_type=response_name)
+                                    params=param_type_str, doc_string=doc_string, result_type=response_type_str)
 
         methods.append(textwrap.indent(method, INDENT))
 
     imports = '\n'.join([format_import(module_name, type_names) for module_name, type_names in import_list.items()])
-
-    return FILE_FORMAT.format(imports=imports, methods=''.join(methods))
+    return FILE_FORMAT.format(imports=imports, methods=''.join(methods), build_command=build_command)
 
 
 def main():
@@ -176,7 +198,14 @@ def main():
 
     # Make sure all the type annotations in lsprotocol are resolved correctly.
     _resolve_forward_references()
-    client_code = generate_client_code()
+
+    # get the build command
+    script_path = Path(sys.argv[0])
+    script_path = script_path.parent / script_path.name
+    sys.argv[0] = script_path.parent.name + '/' + script_path.name
+    build_command = ' '.join(sys.argv)
+
+    client_code = generate_client_code(build_command)
 
     if args.output is None:
         print(client_code)

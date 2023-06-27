@@ -4,9 +4,6 @@ import subprocess
 from pathlib import Path
 from subprocess import CompletedProcess
 import shlex
-import asyncio
-import pexpect
-import os
 
 
 def wrap_command(command: str, switch: str, shell: bool = False):
@@ -41,7 +38,7 @@ def create_opam_subprocess(command: str, switch: str, cwd: Path, shell: bool = F
 
     opam_command = wrap_command(command, switch, shell=shell)
 
-    opam_subprocess = subprocess.Popen(opam_command, shell=shell, text=True, cwd=cwd, **kwargs)
+    opam_subprocess = subprocess.Popen(opam_command, shell=shell, cwd=cwd, **kwargs)
 
     return opam_subprocess
 
