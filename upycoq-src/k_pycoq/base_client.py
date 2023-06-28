@@ -740,8 +740,69 @@ class BaseClient:
     #
     #         return self.request_responses[id]
 
+def winston_test_client():
+    from pathlib import Path
+    import subprocess
+    from k_pycoq.opam import create_opam_subprocess
+    """Tests the client by sending a request and receiving a response"""
+
+    lsp_root_path = Path('~/ultimate-pycoq/coq-projects/debug/debug_simple_arith').expanduser()
+
+    lsp = create_opam_subprocess('coq-lsp --bt', 'coqlsp',
+                                 lsp_root_path,
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+    message_types = {k: v[0] for k, v in lsprotocol.types.METHOD_TO_TYPES.items()}
+    response_types = {k: v[1] for k, v in lsprotocol.types.METHOD_TO_TYPES.items()}
+    error_type = lsprotocol.types.ResponseErrorMessage
+
+    client_root_path = Path('~/ultimate-pycoq/coq-projects/debug/debug_simple_arith').expanduser()
+
+    client = BaseClient(message_types, response_types, error_type, lsp.stdout, lsp.stdin)
+    client.send_request('initialize', lsprotocol.types.InitializeParams(
+        capabilities=lsprotocol.types.ClientCapabilities(),
+        process_id=1234,
+        root_path=client_root_path,
+        root_uri=client_root_path.as_uri()
+        workspace_folders=[lsprotocol.types.WorkspaceFolder(
+            name='debug_simple_arith',
+            uri=client_root_path.as_uri()
+        )]
+    ))
+    client.send_notification('initialized', lsprotocol.types.InitializedParams())
+    client.send_notification('textDocument/didOpen', lsprotocol.types.DidOpenTextDocumentParams(
+        text_document=lsprotocol.types.TextDocumentItem(
+            uri=(client_root_path / '/DebugSimpleArith.v').as_uri(),
+            language_id='coq',
+            version=1,
+            text='Require Import Arith.\n'
+                 'Theorem plus_0_n : forall n : nat, 0 + n = n.\n'
+                 'Proof.\n'
+                 '  intros n.\n'
+                 '  simpl.\n'
+                 '  reflexivity.\n'
+                 'Qed.'
+        )
+    ))
+    client.send_request('textDocument/definition', lsprotocol.types.DefinitionParams(
+        text_document=lsprotocol.types.TextDocumentIdentifier(
+            uri=(client_root_path / '/DebugSimpleArith.v').as_uri()
+        ),
+        position=lsprotocol.types.Position(line=4, character=5)
+    ))
+    client.get_response()
+    import time
+    time.sleep(3)
+    print('-----------------')
+    print(f'time: {client.time_read}')
+    lsp.terminate()
+    client.close()
+
+
 
 def test_client():
+    from pathlib
     from pathlib import Path
     import subprocess
     from k_pycoq.opam import create_opam_subprocess
