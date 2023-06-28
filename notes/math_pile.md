@@ -13,3 +13,5 @@ Ideally we are collecting doing reasoning (think of proofs) -- not just arithmet
 - mathlib: https://github.com/leanprover-community/mathlib
 - Isabelle and more TUM library: https://isabelle.in.tum.de/library/
 - Lean dojo: https://twitter.com/KaiyuYang4/status/1673882824158613504?t=yxYwkyUDTW4PCmaQgG7KKw&s=08
+- Metamath datasets (see README links): https://github.com/metamath/set.mm
+- Coq standard library (princeton): https://www.cs.princeton.edu/courses/archive/fall07/cos595/stdlib/html/index.html
