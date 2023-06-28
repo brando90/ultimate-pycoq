@@ -153,6 +153,16 @@ def example_coq_lsp():
     print(client.wait_for_response(id))
     print('Initialized')
 
+    # change workspace folder
+    client.workspace_did_change_workspace_folders(params=lsp_types.DidChangeWorkspaceFoldersParams(
+        event=lsp_types.WorkspaceFoldersChangeEvent(
+            added=[lsp_types.WorkspaceFolder(
+                uri='file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith',
+                name='name')],
+            removed=[]
+        )
+    ))
+
     # open file
     client.text_document_did_open(params=lsp_types.DidOpenTextDocumentParams(
         text_document=lsp_types.TextDocumentItem(
@@ -169,8 +179,6 @@ def example_coq_lsp():
                  'Qed.'
         )
     ))
-    import time
-    time.sleep(1)
 
     # get goals
     id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
@@ -179,8 +187,7 @@ def example_coq_lsp():
         version=1
     ), position=lsp_types.Position(line=4, character=4)))
 
-    print(client.wait_for_response(id))
-
+    print(f'Goals: {client.wait_for_response(id)}')
 
     # close client
     client.close()
