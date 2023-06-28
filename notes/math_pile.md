@@ -12,3 +12,4 @@ Ideally we are collecting doing reasoning (think of proofs) -- not just arithmet
 - minif2f: https://github.com/openai/miniF2F
 - mathlib: https://github.com/leanprover-community/mathlib
 - Isabelle and more TUM library: https://isabelle.in.tum.de/library/
+- Lean dojo: https://discord.com/channels/@me/1108561555068555265/1123654045014442024
