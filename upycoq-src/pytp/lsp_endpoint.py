@@ -1,8 +1,9 @@
 import threading
+from collections import defaultdict
 from typing import Optional
 
-import cattrs
 from lsprotocol import converters
+from lsprotocol.types import LSPErrorCodes, ErrorCodes
 
 from pytp.json_streams import JsonRpcStreamReader, JsonRpcStreamWriter
 from pytp.lsp_config import LSPConfig
@@ -60,12 +61,15 @@ class LSPEndpoint(threading.Thread):
         # a dictionary mapping request ids to method names
         self.requested_methods: dict[int, str] = {}
         # a dictionary mapping method names to callbacks
-        self.notification_callbacks: dict[str, callable] = {}
+        self.notification_callbacks: defaultdict[str, list[callable]] = defaultdict(list)
+        # self.notification_callbacks: dict[str, dict[str, callable]] = {}
 
         self._converter = config.converter
         self.message_types = config.message_types
         self.response_types = config.response_types
         self.error_type = config.error_type
+
+        self.server_did_error = False
 
     def join(self, timeout: Optional[float] = None):
         """
@@ -103,6 +107,8 @@ class LSPEndpoint(threading.Thread):
                     self.message_received_event.clear()
                     self.received_data_lock.release()
                     self.message_received_event.wait()
+                    if self.server_did_error:
+                        raise Exception('Error received from server. Check the logs for more information.')
                     self.received_data_lock.acquire()
                     continue
                 else:
@@ -116,19 +122,28 @@ class LSPEndpoint(threading.Thread):
         if not self.response_events.get(id):
             raise ValueError(f'No request with id {id} has been sent.')
         self.response_events[id].wait()
-        return self._received_responses[id]
+        response = self._received_responses[id]
+        if isinstance(response, self.error_type):
+            raise Exception(f'Error received from server: {response.error}')
+        return response
 
     def register_notification_callback(self, method: str, callback: callable):
         """
         Registers a callback that will be called when a notification with the given method is received.
+        :param method: The method of the notification.
+        :param callback: The callback to call.
+        :return: The index of the callback in the list of callbacks for the given method.
         """
-        self.notification_callbacks[method] = callback
+        self.notification_callbacks[method].append(callback)
+        return len(self.notification_callbacks[method]) - 1
 
-    def unregister_notification_callback(self, method: str):
+    def unregister_notification_callback(self, method: str, idx: int):
         """
         Unregisters the callback that will be called when a notification with the given method is received.
+        :param method: The method of the notification.
+        :param idx: The index of the callback in the list of callbacks for the given method.
         """
-        self.notification_callbacks.pop(method)
+        self.notification_callbacks[method].pop(idx)
 
     def run(self):
         while True:
@@ -145,6 +160,8 @@ class LSPEndpoint(threading.Thread):
             # handle the 4 different kinds of messages
             if method:
                 if id:
+                    self.server_did_error = True
+                    self.message_received_event.set()
                     raise ValueError(f'Should not receive requests from server, but received {message}')
                 else:
                     # convert json to python object of type self.message_types[method]
@@ -156,12 +173,14 @@ class LSPEndpoint(threading.Thread):
                     # handle notification callbacks
                     callback = self.notification_callbacks.get(method)
                     if callback:
-                        callback(notification)
+                        for c in callback:
+                            c(notification)
             else:
                 if result:
                     method = self.requested_methods[id]
-                    # TODO: return result directly or keep the whole response?
-                    response = self._converter.structure(message, self.response_types[method]).result
+                    print(message)
+                    print(f'Received response to {self.response_types[method]}')
+                    response = self._converter.structure(message, self.response_types[method])
                     with self.received_data_lock:
                         self._received_messages.append(response)
                         self._received_responses[id] = response
@@ -170,16 +189,34 @@ class LSPEndpoint(threading.Thread):
                     # notify threads that are waiting for this response
                     self.response_events[id].set()
                 elif error:
-                    error = self._converter.structure(message, self.error_type)
+                    self.server_did_error = True
+                    response = self._converter.structure(message, self.error_type)
+                    with self.received_data_lock:
+                        self._received_messages.append(response)
+                        self._received_responses[id] = response
+                        self.message_received_event.set()
+
+                    self.response_events[id].set()
+
+                    error = response.error
+                    if error.code in list(LSPErrorCodes):
+                        error_code = LSPErrorCodes(error.code).name
+                    elif error.code in list(ErrorCodes):
+                        error_code = ErrorCodes(error.code).name
+                    else:
+                        error_code = error.code
                     raise Exception(
-                        f'Error received from server with error code: {error.code}, message: {error.message}')
+                        f'Error received from server with error code: {error_code}, message: {error.message}')
                 else:
+                    self.server_did_error = True
                     raise ValueError(f'Failed to parse received message: {message}')
 
     def send_message(self, message):
         """
         Sends a message to the server.
         """
+        if self.server_did_error:
+            raise Exception('Server raised an error, cannot send message. Check the logs for more information.')
         message = self._converter.unstructure(message)
         self.writer.write_message(message)
 
@@ -220,7 +257,12 @@ class LSPEndpoint(threading.Thread):
 
         if return_result:
             self.response_events[id].wait()
-            return self._received_messages[id]
+            with self.received_data_lock:
+                response = self._received_responses[id]
+            # TODO: do we want to allow errors?
+            if isinstance(response, self.error_type):
+                raise Exception(f'Error received from server: {response.error}')
+            return response.result
 
 
 def example_endpoint():
