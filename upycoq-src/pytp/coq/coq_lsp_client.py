@@ -133,6 +133,68 @@ class CoqLSPClient(LSPClient):
         return self.send_request('coq/saveVo', params=params, return_result=return_result)
 
 
+def winston_coq_lsp():
+    # test coq-lsp
+    config = get_default_coq_lsp_config()
+    config.lsp_settings['switch'] = 'coqlsp'
+    config.lsp_settings['flags'] = ['--bt']
+    client = CoqLSPClient('coq-lsp', '0.1.0', config=config)
+
+    import lsprotocol.types as lsp_types
+
+    # initialize client
+    id = client.initialize(params=lsp_types.InitializeParams(
+        capabilities=lsp_types.ClientCapabilities(),
+        root_path=str(Path.cwd()),
+        root_uri=str(Path.cwd().as_uri()),
+        workspace_folders=[lsp_types.WorkspaceFolder(uri=str(Path.cwd().as_uri()), name='name')]
+    ))
+
+    print(client.wait_for_response(id))
+    print('Initialized')
+
+    new_workspace_path = Path('~/ultimate-pycoq/coq-projects/debug/debug_simple_arith').expanduser()
+
+    # change workspace folder
+    client.workspace_did_change_workspace_folders(params=lsp_types.DidChangeWorkspaceFoldersParams(
+        event=lsp_types.WorkspaceFoldersChangeEvent(
+            added=[lsp_types.WorkspaceFolder(
+                uri=new_workspace_path.as_uri(),
+                name='name')],
+            removed=[]
+        )
+    ))
+
+    # open file
+    client.text_document_did_open(params=lsp_types.DidOpenTextDocumentParams(
+        text_document=lsp_types.TextDocumentItem(
+            uri=(new_workspace_path / '/DebugSimpleArith.v').as_uri(),
+            language_id='coq',
+            version=1,
+            text='Require Import Arith.\n'
+                 'Theorem plus_0_n : forall n : nat, 0 + n = n.\n'
+                 'Proof.\n'
+                 '  intros n.\n'
+                 '  simpl.\n'
+                 '  reflexivity.\n'
+                 'Qed.'
+        )
+    ))
+
+    # get goals
+    id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
+        uri=(new_workspace_path / '/DebugSimpleArith.v').as_uri(),
+        version=1
+    ), position=lsp_types.Position(line=4, character=4)))
+
+    print(f'Goals: {client.wait_for_response(id)}')
+
+    # close client
+    client.close()
+    print('Tests passed!')
+
+
+
 def example_coq_lsp():
     # test coq-lsp
     config = get_default_coq_lsp_config()
@@ -195,4 +257,4 @@ def example_coq_lsp():
 
 
 if __name__ == '__main__':
-    example_coq_lsp()
+    winston_coq_lsp()
