@@ -168,7 +168,7 @@ def winston_coq_lsp():
     # open file
     client.text_document_did_open(params=lsp_types.DidOpenTextDocumentParams(
         text_document=lsp_types.TextDocumentItem(
-            uri=(new_workspace_path / '/DebugSimpleArith.v').as_uri(),
+            uri=(new_workspace_path / 'DebugSimpleArith.v').as_uri(),
             language_id='coq',
             version=1,
             text='Require Import Arith.\n'
@@ -183,7 +183,7 @@ def winston_coq_lsp():
 
     # get goals
     id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
-        uri=(new_workspace_path / '/DebugSimpleArith.v').as_uri(),
+        uri=(new_workspace_path / 'DebugSimpleArith.v').as_uri(),
         version=1
     ), position=lsp_types.Position(line=4, character=4)))
 

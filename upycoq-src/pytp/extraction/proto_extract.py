@@ -39,8 +39,11 @@ from pytp.coq.converter import get_coq_lsp_converter
 
 from pytp.coq.coq_lsp_client import CoqLSPClient, get_default_coq_lsp_config
 
+"""
+TODO: host a working client outside ./coq, do we have enough utility functions provided by coq_lsp_client ?
+"""
 
-def example_coq_lsp():
+def winston_coq_lsp():
     # test coq-lsp
     config = get_default_coq_lsp_config()
     config.lsp_settings['switch'] = 'coqlsp'
@@ -60,11 +63,13 @@ def example_coq_lsp():
     print(client.wait_for_response(id))
     print('Initialized')
 
+    new_workspace_path = Path('~/ultimate-pycoq/coq-projects/debug/debug_simple_arith').expanduser()
+
     # change workspace folder
     client.workspace_did_change_workspace_folders(params=lsp_types.DidChangeWorkspaceFoldersParams(
         event=lsp_types.WorkspaceFoldersChangeEvent(
             added=[lsp_types.WorkspaceFolder(
-                uri='file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith',
+                uri=new_workspace_path.as_uri(),
                 name='name')],
             removed=[]
         )
@@ -73,8 +78,7 @@ def example_coq_lsp():
     # open file
     client.text_document_did_open(params=lsp_types.DidOpenTextDocumentParams(
         text_document=lsp_types.TextDocumentItem(
-            uri='file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-                '/DebugSimpleArith.v',
+            uri=(new_workspace_path / 'DebugSimpleArith.v').as_uri(),
             language_id='coq',
             version=1,
             text='Require Import Arith.\n'
@@ -89,8 +93,7 @@ def example_coq_lsp():
 
     # get goals
     id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
-        uri='file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-            '/DebugSimpleArith.v',
+        uri=(new_workspace_path / 'DebugSimpleArith.v').as_uri(),
         version=1
     ), position=lsp_types.Position(line=4, character=4)))
 
