@@ -40,6 +40,7 @@ from pytp.coq.converter import get_coq_lsp_converter
 from pytp.coq.coq_lsp_client import CoqLSPClient, get_default_coq_lsp_config
 
 from itertools import tee, zip_longest
+import re
 
 """
 TODO: host a working client outside ./coq, do we have enough utility functions provided by coq_lsp_client ?
@@ -49,14 +50,25 @@ TODO: host a working client outside ./coq, do we have enough utility functions p
 """
 Some utility function to be moved elsewhere later
 """
-def split_by_idx(S, list_of_indices):
-    left, right = 0, list_of_indices[0]
-    yield S[left:right]
+def split_by_idx(S, list_of_indices, strip_whitespace=False):
+    left, right = 0, list_of_indices[0] + 1
+    if strip_whitespace:
+        yield S[left:right].strip()
+    else:
+        yield S[left:right]
+
     left = right
     for right in list_of_indices[1:]:
-        yield S[left:right]
+        right += 1
+        if strip_whitespace:
+            yield S[left:right].strip()
+        else:
+            yield S[left:right]
         left = right
-    yield S[left:]
+    if strip_whitespace:
+        yield S[left:].strip()
+    else:
+        yield S[left:]
 
 
 def find_all(s, c):
@@ -80,6 +92,28 @@ def parse_proof_file(file_path: Path):
     - num_lines: number of lines
     - checkpoints: positions of each '.' (i.e. end of each statement)
     - augmented_checkpoints = [(position of original statement, position of 'show proof' query), ...]
+
+    {
+        "uri": uri of this file
+        "text": original text,
+        "augmented_text": augmented text for extracting proof terms,
+        "theorems": info about theorems in this file
+        {
+            "name": name of the theorem,
+            "definition": how the theorem is defined,
+            "start_position": [text_index, line, line_index],
+            "end_position": [text_index, line, line_index],
+            "statements": list of proof steps info
+            [{
+                "start_position": [text_index, line, line_index],
+                "end_position": [text_index, line, line_index],
+                "goal": goal at this step,
+                "proof_term": partial proof term at this step
+                "statements": sub list of proof steps
+                [{more statement objs ...}]
+            },...],
+        }
+    }
     """
     text = ""
     augmented_text = ""
@@ -87,10 +121,60 @@ def parse_proof_file(file_path: Path):
     num_line = 0
     checkpoints = []
     augmented_checkpoints = []
+
+
+    file_data = {
+        "uri": file_path, 
+        "text": text,
+        "augmented_text": augmented_text,
+        "theorems": []
+    }
+
     with open(file_path, 'r') as file:
+
+        curr_char_length = 0
+
+        curr_thm_idx = 0
+        wait_thm_init = True
+        wait_thm_def = True
+        wait_thm_stmt = True
+
         for idx, each in enumerate(file):
             text += each
             num_line += 1
+            
+            if wait_thm_init and wait_thm_def and wait_thm_stmt:
+                # mark position of theorems let's assume there is only one theorem on each line for now TODO: multiple theorem in one line?
+                thm_find = each.find('Theorem')
+                theorem_start_position = [curr_char_length + thm_find, idx, thm_find]
+
+                # get theorem name. same assumption as above
+                colon_find = each.find(':')
+                theorem_name = each[theorem_start_position[2] : colon_find].strip()
+
+                # append new thm obj to dict
+                thm_obj = {
+                    "name": theorem_name,
+                    "definition": None,
+                    "start_position": theorem_start_position,
+                    "end_position": None,
+                    "statements": []
+                }
+                file_data['theorems'].append(thm_obj)
+
+                wait_thm_init = False
+            
+            if not wait_thm_init and wait_thm_def:
+                proof_find = text[theorem_start_position[0]:].find('Proof')
+                if proof_find != -1:    # reached proof section, theorem definition must be complete in text
+                    print(text[theorem_start_position[0]:proof_find])
+                    file_data['theorems'][curr_thm_idx]['definition'] = text[theorem_start_position[0]:proof_find].split(":")[1]
+                    wait_thm_def = False
+            
+            if not wait_thm_def and wait_thm_stmt:
+                qed_find = each.find('Qed')
+
+
 
             # determine checkpoints in the original text
             checkpoint = list(find_all(each, '.'))
@@ -99,7 +183,7 @@ def parse_proof_file(file_path: Path):
             
             # split text by '.' to get individual statements
             if len(checkpoint):
-                statements_in_line = list(split_by_idx(each, checkpoint))
+                statements_in_line = list(split_by_idx(each, checkpoint, strip_whitespace=True))[:-1]
                 statements.append(statements_in_line)
                 print(statements_in_line)
             else:
@@ -107,6 +191,10 @@ def parse_proof_file(file_path: Path):
                 print('no statement')
             
             # create augmented text and checkpoints
+
+
+            # increment char count
+            curr_char_length += len(each)
 
     return text, num_line, checkpoints, statements
 
@@ -158,15 +246,28 @@ def winston_coq_lsp():
         )
     ))
 
+    id = client.text_document_document_symbol(params=lsp_types.DocumentSymbolParams(
+        text_document=lsp_types.TextDocumentItem(
+            uri=(proof_path).as_uri(),
+            language_id='coq',
+            version=1,
+            text = proof_text 
+        )
+    ))
+    response = client.wait_for_response(id)
+    print(f'Document Symbols: {response}')
+
     # get goals for each line
     proof_goals = []
     proof_messages = []
     for i in range(proof_num_lines):
-        # get proof goals from coq
-        id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
-            uri=(new_workspace_path / 'DebugSimpleArith.v').as_uri(),
-            version=1
-        ), position=lsp_types.Position(line=i, character=0)))
+        # get proof goals for each statement
+        # line_goals = []
+        # for ckpt in proof_checkpoints[i]:
+        #     id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
+        #         uri=(new_workspace_path / 'DebugSimpleArith.v').as_uri(),
+        #         version=1
+        #     ), position=lsp_types.Position(line=i, character=0)))
 
         # get proof terms for each statement
 
