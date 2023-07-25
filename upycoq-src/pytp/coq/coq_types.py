@@ -71,10 +71,22 @@ class CoqFileProgressKind(enum.Enum):
     Processing = 1
     FatalError = 2
 
+@attrs.define
+class Position2:
+    line: int = attrs.field()
+    character: int = attrs.field()
+    offset: int = attrs.field()
+
+
+@attrs.define
+class Span:
+    start: Position2 = attrs.field()
+    end: Position2 = attrs.field()
+
 
 @attrs.define
 class CoqFileProgressProcessingInfo:
-    range: Range = attrs.field()
+    range: Span = attrs.field()
     """Range for which the processing info was reported."""
     kind: Optional[int] = attrs.field(default=None)
     """Kind of progress that was reported."""
@@ -103,7 +115,7 @@ class CompletionStatusKind(enum.Enum):
 
 @attrs.define
 class CompletionStatus:
-    status: CompletionStatusKind = attrs.field()
+    status: list[CompletionStatusKind] = attrs.field()
     range: Range = attrs.field()
 
 
@@ -112,7 +124,7 @@ SpanInfo = Any
 
 @attrs.define
 class RangedSpan:
-    range: Range = attrs.field()
+    range: Span = attrs.field()
     span: Optional[SpanInfo] = attrs.field(default=None)
 
 
@@ -237,6 +249,51 @@ class CoqFilePerfDataNotification:
     )
     """The method to be invoked."""
     jsonrpc: str = attrs.field(default='2.0')
+
+
+@enum.unique
+class UnicodeCompletion(enum.Enum):
+    OFF = 'off'
+    INTERNAL_SMALL = 'internal_small'
+    NORMAL = 'normal'
+    EXTENDED = 'extended'
+
+
+@attrs.define
+class CoqInitializationOptions:
+    mem_stats: bool = attrs.field(default=False)
+    """[mem_stats] Call [Obj.reachable_words] for every sentence. This is
+    very slow and not very useful, so disabled by default"""
+    gc_quick_stats: bool = attrs.field(default=True)
+    """[gc_quick_stats] Show the diff of [Gc.quick_stats] data for each sentence"""
+    client_version: str = attrs.field(default='any')
+    eager_diagnostics: bool = attrs.field(default=False)
+    """Send diagnostics as document is processed; if false, diagnostics are
+    only sent when Coq finishes processing the file"""
+    goal_after_tactic: bool = attrs.field(default=False)
+    """When showing goals and the cursor is in a tactic, if false, show
+    goals before executing the tactic, if true, show goals after"""
+    show_coq_info_messages: bool = attrs.field(default=True)  # when True, overrides show_notices_as_diagnostics
+    """Show Coq's "Info" messages as diagnostics, such as 'foo has been defined.'
+    and miscellaneous operational messages."""
+    show_notices_as_diagnostics: bool = attrs.field(default=False)
+    """Show Coq's "Notice" messages as diagnostics, such as `About` and `Search` output."""
+    admit_on_bad_qed: bool = attrs.field(default=True)
+    """If a `Qed.` command fails, admit the proof automatically."""
+    debug: bool = attrs.field(default=False)
+    """Enable debug on Coq side, including backtraces"""
+    unicode_completion: UnicodeCompletion = attrs.field(default=UnicodeCompletion.NORMAL)
+    """Enable Server-Side Unicode Completion. Coq-lsp provides two character sets,
+    a regular one, and an extended one with more than 1000 symbols."""
+    max_errors: int = attrs.field(default=150)
+    """Maximum number of errors per file, after that, coq-lsp will stop checking the file."""
+    pp_type: int = attrs.field(default=0)
+    """Pretty-printing type in Info Panel Request, 0 = string; 1 = Pp.t; 2 = Coq Layout Engine (experimental)"""
+    show_stats_on_hover: bool = attrs.field(default=False)
+    """Show timing and memory stats for a sentence on hover."""
+    # TODO: uncomment in version 0.1.7
+    # verbosity: int = attrs.field(default=2)
+    # pp_json: bool = attrs.field(default=False)
 
 
 # Requests
