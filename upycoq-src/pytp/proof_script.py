@@ -128,6 +128,9 @@ def example_proof_script():
         # Handle proof-related metadata
         partial_proof_term = statement.partial_proof_term
         goals = statement.goals
+    
+    print(partial_proof_term)
+    print(goals)
 
 
 if __name__ == '__main__':

@@ -49,6 +49,41 @@ def get_default_coq_lsp_config() -> LSPConfig:
             #       Delay value in seconds when server is idle.
         }
     )
+    
+
+def get_extraction_coq_lsp_config() -> LSPConfig:
+    """
+    Get the default LSPConfig for Coq.
+    :return: The default LSPConfig for Coq.
+    """
+    converter = get_coq_lsp_converter()
+
+    # Use METHOD_TO_TYPES from pytp.coq.coq_types instead of lsprotocol.types.METHOD_TO_TYPES
+    # because the former has been modified to include the coq-specific methods.
+    return LSPConfig(
+        message_types=COQ_MESSAGE_TYPES,
+        response_types=COQ_RESPONSE_TYPES,
+        error_type=ResponseErrorMessage,
+        converter=converter,
+        lsp_settings={
+            'switch': 'default',
+            'cwd': Path.cwd(),
+            'initializationOptions': CoqInitializationOptions(eager_diagnostics=False, show_coq_info_messages=True),
+            'flags': ['--bt'],
+            # options for coq-lsp include (Note, not all of these might be implemented yet):
+            # obtained from https://github.com/ejgallego/coq-lsp/blob/main/controller/coq_lsp.ml on 26 June 2023
+            # --bt: Enable backtraces
+            # --coqcorelib=COQCORELIB:
+            #       Path to Coq plugin directories.
+            # --coqlib=COQLIB:
+            #       Load Coq.Init.Prelude from COQLIB; theories and user-contrib should live there.
+            # --ocamlpath:
+            #       Path to Coq plugin directories.
+            # -I, -R, -Q
+            # -D, --idle-delay:
+            #       Delay value in seconds when server is idle.
+        }
+    )
 
 
 class CoqLSPClient(LSPClient):
