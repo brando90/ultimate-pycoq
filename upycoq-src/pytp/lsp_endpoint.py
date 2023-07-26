@@ -161,7 +161,8 @@ class LSPEndpoint(threading.Thread):
                 if result:
                     method = self.requested_methods[id]
                     # TODO: return result directly or keep the whole response?
-                    response = self._converter.structure(message, self.response_types[method]).result
+                    print(f'Received response to {method}: {result}')
+                    response = self._converter.structure(message, self.response_types[method])
                     with self.received_data_lock:
                         self._received_messages.append(response)
                         self._received_responses[id] = response

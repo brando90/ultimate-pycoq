@@ -210,7 +210,7 @@ def get_text(file_path: Path):
 
 def get_theorem_symbols(document_symbol):
     theorems = []
-    for each_symbol in document_symbol:
+    for each_symbol in document_symbol.result:
         if each_symbol.detail == 'Theorem':
             theorems.append(each_symbol)
     return theorems
@@ -356,7 +356,7 @@ def format_proof_text(proof_text):
 
 def get_augmented_proof_steps(formated_proof_text):
     proof_steps = formated_proof_text.split('\n')
-    augmented_proof_steps = [proof_steps + 'Show Proof.' for proof_steps in proof_steps]
+    augmented_proof_steps = [proof_steps + ' Show Proof.' for proof_steps in proof_steps]
     return augmented_proof_steps
 
 
@@ -371,11 +371,11 @@ def mark_checkpoints_in_range(text_lines, start_line, start_char, end_line, end_
 def substitute_augmented_proof_steps(text_lines, augmented_proof_steps, proof_start_line, proof_start_char, proof_end_line, proof_end_char):
     for i in range(len(augmented_proof_steps)):
         if i == 0:
-            text_lines[proof_start_line] = text_lines[proof_start_line][:proof_start_char] + augmented_proof_steps[0]
-        elif i == len(augmented_proof_steps):
-            text_lines[proof_start_line] += augmented_proof_steps[-1] + text_lines[proof_start_line][proof_end_char:]
+            text_lines[proof_start_line] = text_lines[proof_start_line][:proof_start_char] + ' ' + augmented_proof_steps[0] + ' '
+        elif i == len(augmented_proof_steps) - 1:
+            text_lines[proof_start_line] += augmented_proof_steps[-1] + ' Qed.\n' # TODO: for now assume the next thm must be on the next line
         else:
-            text_lines[proof_start_line] += augmented_proof_steps[i]
+            text_lines[proof_start_line] += augmented_proof_steps[i] + ' '
     for i in range(proof_start_line+1, proof_end_line+1):
         if i == proof_end_line and proof_end_char != len(text_lines[i]) - 1:
             text_lines[i] = text_lines[i][proof_end_char+1:]
@@ -410,7 +410,7 @@ def winston_coq_lsp():
     print('Initialized')
 
     new_workspace_path = Path('~/ultimate-pycoq/coq-projects/debug/debug_simple_arith').expanduser()
-    new_workspace_path = Path('~/ultimate-pycoq/coq-projects/basic-lf/lf').expanduser()
+    # new_workspace_path = Path('~/ultimate-pycoq/coq-projects/basic-lf/lf').expanduser()
 
     # change workspace folder
     client.workspace_did_change_workspace_folders(params=lsp_types.DidChangeWorkspaceFoldersParams(
@@ -424,7 +424,7 @@ def winston_coq_lsp():
 
     # open file
     proof_path = new_workspace_path / 'debug_0_plus_n_eq_n.v'
-    proof_path = new_workspace_path / 'Basics.v'
+    # proof_path = new_workspace_path / 'Basics.v'
     file_text, num_lines, text_lines = parse_proof_file(proof_path)
     print("===========")
     print(file_text)
@@ -464,6 +464,8 @@ def winston_coq_lsp():
             'proof_ranges': proof_ranges,
         }
     
+    curr_version = 1
+    
     for k, v in theorems.items():
         print("=======================")
         print(f'Theorem: {k}') 
@@ -485,21 +487,24 @@ def winston_coq_lsp():
         checkpoints = mark_checkpoints_in_range(text_lines, v['def_ranges'][0],v['def_ranges'][1],v['proof_ranges'][2],v['proof_ranges'][3])
         print(f'Checkpoints: {checkpoints}')
         print("===========")
+        curr_version += 1
         id = client.text_document_did_change(params=lsp_types.DidChangeTextDocumentParams(
             text_document=lsp_types.VersionedTextDocumentIdentifier(
                 uri=(proof_path).as_uri(),
-                version=1
+                version=curr_version
             ),
-            content_changes=[lsp_types.TextDocumentContentChangeEvent(text=''.join(text_lines))]
+            content_changes=[lsp_types.TextDocumentContentChangeEvent_Type2(text=''.join(text_lines))]
         ))
-        goal = client.wait_for_response(id)
+
         for each in checkpoints:
+            print(text_lines[each[0]][each[1] - 1])
             id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
                                     uri=(proof_path).as_uri(),
-                                    version=1
-                                    ), position=lsp_types.Position(line=each[0], character=each[1])))
+                                    version=curr_version
+                                    ), position=lsp_types.Position(line=each[0], character=max(each[1] - 1, 0))))
             goal = client.wait_for_response(id)
             print(f'Goal at {each}: {goal}')
+        
         print("=======================")
 
     # close client

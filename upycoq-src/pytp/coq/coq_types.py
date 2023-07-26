@@ -34,8 +34,14 @@ class Hyp:
 
 
 @attrs.define
+class Info:
+    evar: list[Any] = attrs.field(default=None)
+    name: Optional[str] = attrs.field(default=None)
+
+
+@attrs.define
 class Goal:
-    info: Any = attrs.field()  # TODO: figure out what this is
+    info: Info = attrs.field()  # TODO: figure out what this is
     hyps: list[Hyp] = attrs.field()
     ty: str = attrs.field()
 
@@ -63,7 +69,8 @@ class GoalAnswer:
     messages: list[Message] = attrs.field()
     goals: Optional[GoalConfig] = attrs.field(default=None)
     error: Optional[str] = attrs.field(default=None)
-    program: Optional[dict[str, str]] = attrs.field(default=None)
+    # program: Optional[dict[str, str]] = attrs.field(default=None)
+    program: list[Any] = attrs.field(default=None)
 
 
 @enum.unique
