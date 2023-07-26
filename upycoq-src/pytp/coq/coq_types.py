@@ -63,7 +63,8 @@ class GoalAnswer:
     messages: list[Message] = attrs.field()
     goals: Optional[GoalConfig] = attrs.field(default=None)
     error: Optional[str] = attrs.field(default=None)
-    program: Optional[dict[str, str]] = attrs.field(default=None)
+    # program: Optional[dict[str, str]] = attrs.field(default=None)
+    program: list[Any] = attrs.field(default=None)
 
 
 @enum.unique
