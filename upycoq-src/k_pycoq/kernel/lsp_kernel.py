@@ -227,21 +227,20 @@ if __name__ == '__main__':
             # 'verbosity': 2,  # TODO: throws parsing error? think it must be an error with coqlsp
             # 'show_notices_as_diagnostics': True,
             'show_coq_info_messages': True,
-            'eager_diagnostics': False
         },
         'clientInfo': {
             'name': 'pycoq',
             'version': '0.0.1'
         },
         'capabilities': {
-            # 'textDocument': {
-            #     'publishDiagnostics': {
-            #         'relatedInformation': True
-            #     }
-            # },
-            # 'workspace': {
-            #     'workspaceFolders': True
-            # }
+            'textDocument': {
+                'publishDiagnostics': {
+                    'relatedInformation': True
+                }
+            },
+            'workspace': {
+                'workspaceFolders': True
+            }
         }
     })
 
@@ -301,7 +300,6 @@ if __name__ == '__main__':
           - simpl.
             rewrite -> IH.
             reflexivity.
-            Show Proof.
         Qed."""
         }
     })
@@ -409,13 +407,13 @@ if __name__ == '__main__':
     #     }
     # })
 
-    # lsp_endpoint.send_request('coq/saveVo', {
-    #     'textDocument': {
-    #         'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
-    #                  '/SimpleArith.v',
-    #         'version': 1
-    #     }
-    # })
+    lsp_endpoint.send_request('coq/saveVo', {
+        'textDocument': {
+            'uri': 'file:///Users/kaifronsdal/Documents/GitHub/ultimate-pycoq/coq-projects/debug/debug_simple_arith'
+                     '/SimpleArith.v',
+            'version': 1
+        }
+    })
 
     # lsp_endpoint.send_notification('initialized', {})
 

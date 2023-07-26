@@ -37,7 +37,7 @@ from pytp.lsp_client import LSPClient, Id
 from pytp.lsp_config import LSPConfig
 from pytp.coq.converter import get_coq_lsp_converter
 
-from pytp.coq.coq_lsp_client import CoqLSPClient, get_default_coq_lsp_config, get_extraction_coq_lsp_config
+from pytp.coq.coq_lsp_client import CoqLSPClient, get_default_coq_lsp_config
 
 from itertools import tee, zip_longest
 import re
@@ -210,7 +210,7 @@ def get_text(file_path: Path):
 
 def get_theorem_symbols(document_symbol):
     theorems = []
-    for each_symbol in document_symbol.result:
+    for each_symbol in document_symbol:
         if each_symbol.detail == 'Theorem':
             theorems.append(each_symbol)
     return theorems
@@ -356,7 +356,7 @@ def format_proof_text(proof_text):
 
 def get_augmented_proof_steps(formated_proof_text):
     proof_steps = formated_proof_text.split('\n')
-    augmented_proof_steps = [proof_steps + ' Show Proof.' for proof_steps in proof_steps]
+    augmented_proof_steps = [proof_steps + 'Show Proof.' for proof_steps in proof_steps]
     return augmented_proof_steps
 
 
@@ -371,11 +371,11 @@ def mark_checkpoints_in_range(text_lines, start_line, start_char, end_line, end_
 def substitute_augmented_proof_steps(text_lines, augmented_proof_steps, proof_start_line, proof_start_char, proof_end_line, proof_end_char):
     for i in range(len(augmented_proof_steps)):
         if i == 0:
-            text_lines[proof_start_line] = text_lines[proof_start_line][:proof_start_char] + ' ' + augmented_proof_steps[0] + ' '
-        elif i == len(augmented_proof_steps) - 1:
-            text_lines[proof_start_line] += augmented_proof_steps[-1] + ' Qed.\n' # TODO: for now assume the next thm must be on the next line
+            text_lines[proof_start_line] = text_lines[proof_start_line][:proof_start_char] + augmented_proof_steps[0]
+        elif i == len(augmented_proof_steps):
+            text_lines[proof_start_line] += augmented_proof_steps[-1] + text_lines[proof_start_line][proof_end_char:]
         else:
-            text_lines[proof_start_line] += augmented_proof_steps[i] + ' '
+            text_lines[proof_start_line] += augmented_proof_steps[i]
     for i in range(proof_start_line+1, proof_end_line+1):
         if i == proof_end_line and proof_end_char != len(text_lines[i]) - 1:
             text_lines[i] = text_lines[i][proof_end_char+1:]
@@ -391,7 +391,7 @@ def parse_proof_file(file_path: Path):
 
 def winston_coq_lsp():
     # test coq-lsp
-    config = get_extraction_coq_lsp_config()
+    config = get_default_coq_lsp_config()
     config.lsp_settings['switch'] = 'coqlsp'
     config.lsp_settings['flags'] = ['--bt']
     client = CoqLSPClient('coq-lsp', '0.1.0', config=config)
@@ -399,18 +399,18 @@ def winston_coq_lsp():
     import lsprotocol.types as lsp_types
 
     # initialize client
-    # id = client.initialize(params=lsp_types.InitializeParams(
-    #     capabilities=lsp_types.ClientCapabilities(),
-    #     root_path=str(Path.cwd()),
-    #     root_uri=str(Path.cwd().as_uri()),
-    #     workspace_folders=[lsp_types.WorkspaceFolder(uri=str(Path.cwd().as_uri()), name='name')]
-    # ))
+    id = client.initialize(params=lsp_types.InitializeParams(
+        capabilities=lsp_types.ClientCapabilities(),
+        root_path=str(Path.cwd()),
+        root_uri=str(Path.cwd().as_uri()),
+        workspace_folders=[lsp_types.WorkspaceFolder(uri=str(Path.cwd().as_uri()), name='name')]
+    ))
 
-    # print(client.wait_for_response(id))
-    # print('Initialized')
+    print(client.wait_for_response(id))
+    print('Initialized')
 
     new_workspace_path = Path('~/ultimate-pycoq/coq-projects/debug/debug_simple_arith').expanduser()
-    # new_workspace_path = Path('~/ultimate-pycoq/coq-projects/basic-lf/lf').expanduser()
+    new_workspace_path = Path('~/ultimate-pycoq/coq-projects/basic-lf/lf').expanduser()
 
     # change workspace folder
     client.workspace_did_change_workspace_folders(params=lsp_types.DidChangeWorkspaceFoldersParams(
@@ -424,7 +424,7 @@ def winston_coq_lsp():
 
     # open file
     proof_path = new_workspace_path / 'debug_0_plus_n_eq_n.v'
-    # proof_path = new_workspace_path / 'Basics.v'
+    proof_path = new_workspace_path / 'Basics.v'
     file_text, num_lines, text_lines = parse_proof_file(proof_path)
     print("===========")
     print(file_text)
@@ -490,17 +490,16 @@ def winston_coq_lsp():
                 uri=(proof_path).as_uri(),
                 version=1
             ),
-            content_changes=[lsp_types.TextDocumentContentChangeEvent_Type2(text=''.join(text_lines))]
+            content_changes=[lsp_types.TextDocumentContentChangeEvent(text=''.join(text_lines))]
         ))
+        goal = client.wait_for_response(id)
         for each in checkpoints:
-            print(text_lines[each[0]][each[1] - 1])
             id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
                                     uri=(proof_path).as_uri(),
                                     version=1
-                                    ), position=lsp_types.Position(line=each[0], character=max(each[1] - 1, 0))))
+                                    ), position=lsp_types.Position(line=each[0], character=each[1])))
             goal = client.wait_for_response(id)
             print(f'Goal at {each}: {goal}')
-        
         print("=======================")
 
     # close client
