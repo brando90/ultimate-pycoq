@@ -349,8 +349,11 @@ def format_proof_text(proof_text):
             idx += len(line_split) - 1
         else:
             idx += 1
+
+    proof_texts.append('Qed.')
     
     proof_texts = filter(lambda x: x != '', proof_texts)
+    
     
     return '\n'.join(proof_texts)
 
@@ -374,7 +377,7 @@ def substitute_augmented_proof_steps(text_lines, augmented_proof_steps, proof_st
         if i == 0:
             text_lines[proof_start_line] = text_lines[proof_start_line][:proof_start_char] + ' ' + augmented_proof_steps[0] + ' '
         elif i == len(augmented_proof_steps) - 1:
-            text_lines[proof_start_line] += augmented_proof_steps[-1] + ' Qed.\n' # TODO: for now assume the next thm must be on the next line
+            text_lines[proof_start_line] += augmented_proof_steps[-1] + '\n' # TODO: for now assume the next thm must be on the next line
         else:
             text_lines[proof_start_line] += augmented_proof_steps[i] + ' '
     for i in range(proof_start_line+1, proof_end_line+1):
@@ -411,7 +414,7 @@ def winston_coq_lsp():
     # print('Initialized')
 
     new_workspace_path = Path('~/ultimate-pycoq/coq-projects/debug/debug_simple_arith').expanduser()
-    # new_workspace_path = Path('~/ultimate-pycoq/coq-projects/basic-lf/lf').expanduser()
+    new_workspace_path = Path('~/ultimate-pycoq/coq-projects/basic-lf/lf').expanduser()
 
     # change workspace folder
     client.workspace_did_change_workspace_folders(params=lsp_types.DidChangeWorkspaceFoldersParams(
@@ -425,7 +428,7 @@ def winston_coq_lsp():
 
     # open file
     proof_path = new_workspace_path / 'debug_0_plus_n_eq_n.v'
-    # proof_path = new_workspace_path / 'Basics.v'
+    proof_path = new_workspace_path / 'Basics.v'
     file_text, num_lines, text_lines = parse_proof_file(proof_path)
     print("===========")
     print(file_text)
@@ -499,27 +502,47 @@ def winston_coq_lsp():
         ))
 
         is_statement = True
-        curr_idx = 0
         proof_steps = {
             'text': None,
             'goal_before': None,
             'goal_after': None,
+            'proof_term_before': None, 
             'proof_term_after': None, 
         }
-        for i, each in enumerate(checkpoints):
 
-            print(text_lines[each[0]][each[1] - 1])
-            id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
-                                    uri=(proof_path).as_uri(),
-                                    version=curr_version
-                                    ), position=lsp_types.Position(line=each[0], character=max(each[1] - 1, 0))))
-            goal = client.wait_for_response(id)
+        curr_idx = 0
+        for i in range(2, len(checkpoints)):
+            if is_statement:
+                proof_steps['text'] = format_proof_text(v['proof']).split('\n')[curr_idx]
 
-            if is_statement and goal.result.goals or i == len(checkpoints) - 1:
-                print(f'Goal at {each}: {[each_g.ty for each_g in goal.result.goals.goals]}')
+                id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
+                                        uri=(proof_path).as_uri(),
+                                        version=curr_version
+                                        ), position=lsp_types.Position(line=checkpoints[i][0], character=max(checkpoints[i][1] - 1, 0))))
+                goal = client.wait_for_response(id)
+                proof_steps['goal_before'] = [each_g.ty for each_g in goal.result.goals.goals] if goal.result.goals else []
+                proof_steps['proof_term_before'] = theorems[k]['proof_steps'][-1]['proof_term_after'] if len(theorems[k]['proof_steps']) else []
             else:
-                print(f'Proof Term at {each}: {[each_m.text for each_m in goal.result.messages]}')
+                id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
+                                        uri=(proof_path).as_uri(),
+                                        version=curr_version
+                                        ), position=lsp_types.Position(line=checkpoints[i][0], character=max(checkpoints[i][1] - 1, 0))))
+                proof_term = client.wait_for_response(id)
+                proof_steps['goal_after'] = [each_g.ty for each_g in goal.result.goals.goals] if goal.result.goals else []
+                proof_steps['proof_term_after'] = [each_m.text for each_m in proof_term.result.messages]
+                theorems[k]['proof_steps'].append(proof_steps)
+                proof_steps = {
+                    'text': None,
+                    'goal_before': None,
+                    'goal_after': None,
+                    'proof_term_before': None, 
+                    'proof_term_after': None, 
+                }
+                curr_idx += 1
             is_statement = not is_statement
+        print("===========")
+        proof_steps = theorems[k]['proof_steps']
+        for each in proof_steps: print(each)
         
         print("=======================")
 
@@ -527,6 +550,7 @@ def winston_coq_lsp():
     client.close()
 
     print('Tests passed!')
+    print(theorems)
 
 
 if __name__ == '__main__':
