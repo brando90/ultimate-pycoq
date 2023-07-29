@@ -344,7 +344,8 @@ def format_proof_text(proof_text):
         if len(line_split) > 2:
             proof_texts[idx] = line_split[0] + '.'
             for j, each in enumerate(line_split[1:-1]):
-                proof_texts.insert(idx + j + 1, each.strip() + '.')
+                if each.strip() != "Show Proof": # skip all exisiting Show Proof
+                    proof_texts.insert(idx + j + 1, each.strip() + '.')
             idx += len(line_split) - 1
         else:
             idx += 1
@@ -356,7 +357,7 @@ def format_proof_text(proof_text):
 
 def get_augmented_proof_steps(formated_proof_text):
     proof_steps = formated_proof_text.split('\n')
-    augmented_proof_steps = [proof_steps + ' Show Proof.' for proof_steps in proof_steps]
+    augmented_proof_steps = ['Show Proof.'] + [proof_steps + ' Show Proof.' for proof_steps in proof_steps]  # the first Show Proof will always be '?Goal', TODO: check this
     return augmented_proof_steps
 
 
@@ -462,6 +463,7 @@ def winston_coq_lsp():
             'proof': thm_proof,
             'def_ranges': def_ranges, # [start_line, start_char, end_line, end_char]
             'proof_ranges': proof_ranges,
+            'proof_steps': []
         }
     
     curr_version = 1
@@ -496,14 +498,28 @@ def winston_coq_lsp():
             content_changes=[lsp_types.TextDocumentContentChangeEvent_Type2(text=''.join(text_lines))]
         ))
 
-        for each in checkpoints:
+        is_statement = True
+        curr_idx = 0
+        proof_steps = {
+            'text': None,
+            'goal_before': None,
+            'goal_after': None,
+            'proof_term_after': None, 
+        }
+        for i, each in enumerate(checkpoints):
+
             print(text_lines[each[0]][each[1] - 1])
             id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
                                     uri=(proof_path).as_uri(),
                                     version=curr_version
                                     ), position=lsp_types.Position(line=each[0], character=max(each[1] - 1, 0))))
             goal = client.wait_for_response(id)
-            print(f'Goal at {each}: {goal}')
+
+            if is_statement and goal.result.goals or i == len(checkpoints) - 1:
+                print(f'Goal at {each}: {[each_g.ty for each_g in goal.result.goals.goals]}')
+            else:
+                print(f'Proof Term at {each}: {[each_m.text for each_m in goal.result.messages]}')
+            is_statement = not is_statement
         
         print("=======================")
 
