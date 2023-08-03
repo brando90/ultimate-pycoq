@@ -26,7 +26,7 @@ for statement in proof_script.statements:
 import subprocess
 from pathlib import Path
 from typing import Union
-
+import json
 
 from packaging.version import parse as parse_version
 
@@ -429,6 +429,7 @@ def winston_coq_lsp():
     # open file
     proof_path = new_workspace_path / 'debug_0_plus_n_eq_n.v'
     proof_path = new_workspace_path / 'Basics.v'
+    # proof_path = new_workspace_path / 'Lists.v'
     file_text, num_lines, text_lines = parse_proof_file(proof_path)
     print("===========")
     print(file_text)
@@ -528,7 +529,7 @@ def winston_coq_lsp():
                                         version=curr_version
                                         ), position=lsp_types.Position(line=checkpoints[i][0], character=max(checkpoints[i][1] - 1, 0))))
                 proof_term = client.wait_for_response(id)
-                proof_steps['goal_after'] = [each_g.ty for each_g in goal.result.goals.goals] if goal.result.goals else []
+                proof_steps['goal_after'] = [each_g.ty for each_g in proof_term.result.goals.goals] if proof_term.result.goals else []
                 proof_steps['proof_term_after'] = [each_m.text for each_m in proof_term.result.messages]
                 theorems[k]['proof_steps'].append(proof_steps)
                 proof_steps = {
@@ -541,10 +542,15 @@ def winston_coq_lsp():
                 curr_idx += 1
             is_statement = not is_statement
         print("===========")
-        proof_steps = theorems[k]['proof_steps']
-        for each in proof_steps: print(each)
+        # proof_steps = theorems[k]['proof_steps']
+        # for each in proof_steps: print(each)
         
         print("=======================")
+        
+    with open(f'extracted_theorems.json', 'w') as out_f:
+        thm_json = json.dumps(theorems)
+        out_f.write(thm_json)
+
 
     # close client
     client.close()
