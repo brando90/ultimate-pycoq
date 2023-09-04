@@ -396,7 +396,7 @@ def parse_proof_file(file_path: Path):
 def winston_coq_lsp():
     # test coq-lsp
     config = get_extract_coq_lsp_config()
-    config.lsp_settings['switch'] = 'coqlsp'
+    config.lsp_settings['switch'] = 'coq-8.17'
     config.lsp_settings['flags'] = ['--bt']
     client = CoqLSPClient('coq-lsp', '0.1.0', config=config)
 
