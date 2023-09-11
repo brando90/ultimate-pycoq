@@ -266,6 +266,21 @@ def get_theorem_text(theorem_symbol, text_lines, return_range = False):
         if i == proof_start_line:
             start_char = proof_start_char
         proof_text += text_lines[i][start_char:]
+        # proof_re = re.search(r'Proof .*\.', text_lines[i][start_char:])
+        # if proof_re is not None:
+        #     print('here')
+        #     proof_end_line = i
+        #     proof_end_char = text_lines[i][start_char:].find('\n')
+        #     break
+        if 'Proof' in text_lines[i][start_char:] and 'Proof.' not in text_lines[i][start_char:]:
+            j = i
+            while '.\n' not in text_lines[j][start_char:]:
+                j += 1
+                proof_text += text_lines[j][start_char:]
+            proof_end_line = j
+            proof_end_char = text_lines[j][start_char:].find('\n')
+            break
+
         if 'Defined.' in text_lines[i][start_char:]:
             proof_end_line = i
             proof_end_char = text_lines[i][start_char:].find('Defined.') + 8
@@ -292,7 +307,8 @@ def get_theorem_definition(theorem_text):
         definition_text (str): the text of the theorem definition
     """
     definition_start = theorem_text.find(':')
-    definition_end = theorem_text.find('Proof.')
+    definition_end = theorem_text.find('Proof') # In case (Proof term.) is used.
+    # definition_end = re.search(r'Proof*.', theorem_text).start()
     
     if definition_end == -1: # if the 'Proof.' keyword is not used
         definition_end = theorem_text.find('.') + 1
@@ -308,13 +324,27 @@ def get_theorem_proof(theorem_text):
     Returns:
         proof_text (str): the text of the theorem proof
     """
-    proof_start = theorem_text.find('Proof.')
-    proof_end = theorem_text.find('Qed.')
-    if proof_end == -1:
-        is_qed = False
-        proof_end = theorem_text.find('Defined.')
-    else:
-        is_qed = True
+    proof_start = theorem_text.find('Proof')
+    # proof_end = theorem_text.find('Qed.')
+    proof_end = len(theorem_text) - 1
+    print(theorem_text)
+    print('-'*10)
+
+    # if proof_start == -1:
+    #     proof_re = re.search(r'Proof .*\.', theorem_text)
+    #     if proof_re:
+    #         proof_start = proof_re.start()
+    #     else:
+    #         proof_re = re.search(r'Proof', theorem_text)
+
+            
+
+    # if proof_end == -1:
+    #     is_qed = False
+    #     proof_end = theorem_text.find('Defined.') # Proofs should generally end with either Qed or Defined.
+    # else:
+    #     is_qed = True
+    is_qed = True
 
     proof_text = ''
 
@@ -466,7 +496,7 @@ def check_all_projects(project_root: Path, start=None, end=None):
                 text_document=lsp_types.TextDocumentItem(
                     uri=(proof_path).as_uri(),
                     language_id='coq',
-                    version=1,
+                   version=1,
                     text = file_text 
                 )
             ))
@@ -604,9 +634,9 @@ def check_all_projects(project_root: Path, start=None, end=None):
     print(f"Total num of theorems: {thm_counts}")
 
 
-    output_file = f'extracted_theorems.json'
+    output_file = './extracted_theorems/extracted_theorems.json'
     if start is not None and end is not None:
-        output_file = f'extracted_theorems_{start}_{end}.json'
+        output_file = f'./extracted_theorems/extracted_theorems_{start}_{end}.json'
 
     with open(output_file, 'w') as out_f:
         thm_json = json.dumps(all_project_theorems)
@@ -682,7 +712,7 @@ def winston_coq_lsp():
         )
     ))
     document_symbols = client.wait_for_response(id)
-    print(f'Document Symbols: {document_symbols}')
+    # print(f'Document Symbols: {document_symbols}')
 
     # get theorems
     thm_symbols = get_theorem_symbols(document_symbols)
@@ -690,13 +720,14 @@ def winston_coq_lsp():
     for each_thm_symbol in thm_symbols:
         thm_text, def_ranges, proof_ranges = get_theorem_text(each_thm_symbol, text_lines, return_range=True)
         thm_def = get_theorem_definition(thm_text)
-        thm_proof = get_theorem_proof(thm_text)
+        thm_proof, ends_qed = get_theorem_proof(thm_text)
         theorems[get_theorem_name(each_thm_symbol)] = {
             'text': thm_text,
             'definition': thm_def, 
             'proof': thm_proof,
             'def_ranges': def_ranges, # [start_line, start_char, end_line, end_char]
             'proof_ranges': proof_ranges,
+            'ends_qed': ends_qed,
             'proof_steps': []
         }
     
@@ -714,14 +745,14 @@ def winston_coq_lsp():
         print("===========")
         print(f'Proof: {v["proof"]}')
         print("===========")
-        print(f'Formated Proof: {format_proof_text(v["proof"])}')
+        print(f'Formated Proof: {format_proof_text(v["proof"], v["ends_qed"])}')
         print("===========")
         text_lines = substitute_augmented_proof_steps(text_lines, get_augmented_proof_steps(format_proof_text(v["proof"])), *v['proof_ranges'])
         new_thm_text = "".join(text_lines[v["def_ranges"][0]:v["proof_ranges"][2]])
         print(f'Augmented Text: {new_thm_text}')
         print("===========")
         checkpoints = mark_checkpoints_in_range(text_lines, v['def_ranges'][0],v['def_ranges'][1],v['proof_ranges'][2],v['proof_ranges'][3])
-        print(f'Checkpoints: {checkpoints}')
+        print(f'Checkpoints: {len(checkpoints)}')
         print("===========")
         curr_version += 1
         id = client.text_document_did_change(params=lsp_types.DidChangeTextDocumentParams(
