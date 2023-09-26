@@ -44,8 +44,11 @@ class ProofScript:
 
         self.lsp_client = lsp_client
 
+        # self.lsp_client.register_notification_callback('$/coq/fileProgress', lambda notification: print(notification))
+
         self.document = document_from_path(self.path)
-        self.statements: list[Statement] = self.statements_from_document(self.document)
+        # self.statements: list[Statement] = self.statements_from_document(self.document)
+        self.statements = []
         # TODO: make dummy document for empty path
         self.set_document()
 

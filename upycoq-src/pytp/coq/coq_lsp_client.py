@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Union
 
 from lsprotocol.types import InitializeParams, ClientCapabilities, WorkspaceFolder, VersionedTextDocumentIdentifier, \
-    DidOpenTextDocumentParams, DidChangeTextDocumentParams
+    DidOpenTextDocumentParams, DidChangeTextDocumentParams, CancelParams
 from packaging.version import parse as parse_version
 
 from pytp.coq.coq_types import ResponseErrorMessage, GoalRequest, GoalAnswer, FlecheDocumentParams, \
@@ -68,7 +68,8 @@ def get_extract_coq_lsp_config() -> LSPConfig:
         lsp_settings={
             'switch': 'default',
             'cwd': Path.cwd(),
-            'initializationOptions': None, # initialization with None custom option provide messages we needed. TODO: what is the setting with none custom option?
+            'initializationOptions': None,
+            # CoqInitializationOptions(max_errors=500), # initialization with None custom option provide messages we needed. TODO: what is the setting with none custom option?
             'flags': ['--bt'],
             # options for coq-lsp include (Note, not all of these might be implemented yet):
             # obtained from https://github.com/ejgallego/coq-lsp/blob/main/controller/coq_lsp.ml on 26 June 2023
@@ -110,16 +111,24 @@ class CoqLSPClient(LSPClient):
 
         self.document = ''
 
-        self.endpoint.register_notification_callback('$/logTrace', lambda notification: print(notification.params.message))
-        self.endpoint.register_notification_callback('window/logMessage', lambda notification: print(notification.params.message))
+
+        # self.endpoint.register_notification_callback('$/logTrace', lambda notification: print(notification.params.message))
+        # self.endpoint.register_notification_callback('window/logMessage', lambda notification: print(notification.params.message))
 
         def on_file_progress(notification: CoqFileProgressNotification):
-            start = notification.params.processing[0].range.start
-            end = notification.params.processing[0].range.end
-            print(f'Processed {start.line}:{end.line}:')  # {self.document[start.offset:end.offset]}')
+            # start = notification.params.processing[0].range.start
+            # end = notification.params.processing[0].range.end
+            # print(f'Processed {start.line}:{end.line}:')  # {self.document[start.offset:end.offset]}')
+            pass
 
         self.endpoint.register_notification_callback('$/coq/fileProgress', on_file_progress)
-        self.endpoint.register_notification_callback('textDocument/publishDiagnostics', lambda notification: print(notification.params))
+
+        def on_diagnostics(notification):
+            # if len(notification.params.diagnostics):
+            #     print(notification.params.diagnostics[-1])
+            pass
+
+        self.endpoint.register_notification_callback('textDocument/publishDiagnostics', on_diagnostics)
 
         init_params = InitializeParams(
             capabilities=ClientCapabilities(),

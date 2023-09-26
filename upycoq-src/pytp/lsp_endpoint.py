@@ -115,13 +115,16 @@ class LSPEndpoint(threading.Thread):
                     break
             yield message
 
-    def wait_for_response(self, id: int):
+    def wait_for_response(self, id: int, timeout=None):
         """
         Waits for a response to a request with the given id. Returns the response.
         """
         if not self.response_events.get(id):
             raise ValueError(f'No request with id {id} has been sent.')
-        self.response_events[id].wait()
+        self.response_events[id].wait(timeout=timeout)
+        if id not in self._received_responses.keys():
+            print('Timeout from server')
+            return None
         response = self._received_responses[id]
         if isinstance(response, self.error_type):
             raise Exception(f'Error received from server: {response.error}')
@@ -176,10 +179,10 @@ class LSPEndpoint(threading.Thread):
                         for c in callback:
                             c(notification)
             else:
-                if result:
+                if result is not None:
                     method = self.requested_methods[id]
-                    print(message)
-                    print(f'Received response to {self.response_types[method]}')
+                    # print(message)
+                    # print(f'Received response to {self.response_types[method]}')
                     response = self._converter.structure(message, self.response_types[method])
                     with self.received_data_lock:
                         self._received_messages.append(response)

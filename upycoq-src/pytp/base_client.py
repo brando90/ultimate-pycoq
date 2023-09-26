@@ -59,13 +59,13 @@ class BaseClient:
         """
         self.endpoint.unregister_notification_callback(method)
 
-    def wait_for_response(self, id: int):
+    def wait_for_response(self, id: int, timeout=None):
         """
         Waits for and returns the response to a request with the given id.
         :param id: The id of the request to wait for
         :return: The response to the request with id `id`
         """
-        return self.endpoint.wait_for_response(id)
+        return self.endpoint.wait_for_response(id, timeout=timeout)
 
     def received_messages(self, start: int = 0, wait_for_more: bool = False):
         """
