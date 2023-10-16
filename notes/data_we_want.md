@@ -9,8 +9,9 @@ Definitions:
 `FL := Formal Language`
 
 1. `<prev_tac, proof_state, next_tac>` (if possible `global_context` too)
-2. `<proof_state, entire_proof_term>` (this includes when proof state is just the top level `theorem` or `lemma` etc. so entire_proof)
-3. `<proof_state, partial_proof_term, hole_terms>` this means the parital proof term for the current goal (e.g., top level theorem too) and the holes to complete the proof. Ideally not only the tactic (or hammer), the actual proof term.
+2. `<prev_tactic_script, proof_state, remainign_tacic_script>` (if possible `global_context` too). (meant to help user with suggestion about the remaining tactic script)
+3. `<proof_state, entire_proof_term>` (this includes when proof state is just the top level `theorem` or `lemma` etc. so entire_proof)
+4. `<proof_state, partial_proof_term, hole_terms>` this means the parital proof term for the current goal (e.g., top level theorem too) and the holes to complete the proof. Ideally not only the tactic (or hammer), the actual proof term.
 
 
 Don't forget:
