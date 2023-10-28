@@ -201,7 +201,7 @@ def old_parse_proof_file(file_path: Path) :
 
 
 def get_text(file_path: Path):
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', errors='ignore') as file:
         text = ''
         lines = []
         for each in file:
@@ -213,7 +213,7 @@ def get_text(file_path: Path):
 def get_theorem_symbols(document_symbol):
     theorems = []
     for each_symbol in document_symbol.result:
-        if each_symbol.detail == 'Theorem':
+        if each_symbol.detail == 'Theorem' or each_symbol.detail == 'Lemma':
             theorems.append(each_symbol)
     return theorems
 
@@ -327,8 +327,6 @@ def get_theorem_proof(theorem_text):
     proof_start = theorem_text.find('Proof')
     # proof_end = theorem_text.find('Qed.')
     proof_end = len(theorem_text) - 1
-    print(theorem_text)
-    print('-'*10)
 
     # if proof_start == -1:
     #     proof_re = re.search(r'Proof .*\.', theorem_text)
@@ -432,9 +430,45 @@ def substitute_augmented_proof_steps(text_lines, augmented_proof_steps, proof_st
     return text_lines
 
 
+def get_theorem_names_in_file(file_path: Path):
+    text, lines = get_text(file_path)
+    theoem_regex = re.compile(r'Theorem ([^:]*) :')
+    lemma_regex = re.compile(r'Lemma ([^:]*) :')
+    print(file_path)
+    print(re.findall(theoem_regex, text) + re.findall(lemma_regex, text))
+    return re.findall(theoem_regex, text) + re.findall(lemma_regex, text)
+
+
 def parse_proof_file(file_path: Path):
     text, lines = get_text(file_path)
     return text, len(lines), lines
+
+
+def get_theorem_names_in_projects(project_root: Path):
+    project_dirs = list(project_root.glob("*"))
+    all_projects = {
+        'projects': []
+    }
+    for project_path in tqdm(project_dirs, position=0, leave=True, desc='projects'):
+        print(f'--- exploring project {project_path.name} ---')
+        coq_scripts = project_path.rglob("*.v")
+        project = {
+            'name': project_path.name,
+            'coq_scripts': [
+                {
+                    'name': str(proof_path),
+                    'theorems': get_theorem_names_in_file(proof_path)
+                } for proof_path in coq_scripts
+            ]
+        }
+        all_projects['projects'].append(project)
+    output_file = './coq_projects_theorem_names.json'
+
+    print(f"Total num of projects: {len(all_projects['projects'])}")
+
+    with open(output_file, 'w') as out_f:
+        thm_json = json.dumps(all_projects)
+        out_f.write(thm_json)
 
 
 def check_all_projects(project_root: Path, start=None, end=None):
@@ -500,7 +534,7 @@ def check_all_projects(project_root: Path, start=None, end=None):
                     text = file_text 
                 )
             ))
-            document_symbols = client.wait_for_response(id, timeout=2)
+            document_symbols = client.wait_for_response(id, timeout=5)
 
             theorems = {}
             if document_symbols:
@@ -508,102 +542,12 @@ def check_all_projects(project_root: Path, start=None, end=None):
                 success_project_file_counts += 1
 
                 print(f"There are {len(thm_symbols)} theorems at {proof_path.name}")
-                for each_thm_symbol in thm_symbols:
-                    thm_text, def_ranges, proof_ranges = get_theorem_text(each_thm_symbol, text_lines, return_range=True)
-                    thm_def = get_theorem_definition(thm_text)
-                    thm_proof, ends_qed = get_theorem_proof(thm_text)
-                    theorems[get_theorem_name(each_thm_symbol)] = {
-                        'path': str(proof_path),
-                        'name': get_theorem_name(each_thm_symbol),
-                        'text': thm_text,
-                        'definition': thm_def, 
-                        'proof': thm_proof,
-                        'def_ranges': def_ranges, # [start_line, start_char, end_line, end_char]
-                        'proof_ranges': proof_ranges,
-                        'proof_steps': [],
-                        'ends_qed': ends_qed,
-                    }
-                
-                curr_version = 1
-                
-                
-                skipped_thms = []
-                for k, v in theorems.items():
-                    print(f"    {k}")
-                    format_proof_text(v["proof"], v['ends_qed'])
-                    text_lines = substitute_augmented_proof_steps(text_lines, get_augmented_proof_steps(format_proof_text(v["proof"])), *v['proof_ranges'])
-                    new_thm_text = "".join(text_lines[v["def_ranges"][0]:v["proof_ranges"][2]])
-                    checkpoints = mark_checkpoints_in_range(text_lines, v['def_ranges'][0],v['def_ranges'][1],v['proof_ranges'][2],v['proof_ranges'][3])
-                    curr_version += 1
-                    id = client.text_document_did_change(params=lsp_types.DidChangeTextDocumentParams(
-                        text_document=lsp_types.VersionedTextDocumentIdentifier(
-                            uri=(proof_path).as_uri(),
-                            version=curr_version
-                        ),
-                        content_changes=[lsp_types.TextDocumentContentChangeEvent_Type2(text=''.join(text_lines))]
-                    ))
-
-                    is_statement = True
-                    proof_steps = {
-                        'text': None,
-                        'goal_before': None,
-                        'goal_after': None,
-                        'proof_term_before': None, 
-                        'proof_term_after': None, 
-                    }
-
-                    curr_idx = 0
-                    print(f"        {len(checkpoints)}")
-                    formated_proof_text = format_proof_text(v['proof']).split('\n')
-                    if len(checkpoints) > 500:
-                        print('skipped because too many checkpoints.')
-                        skipped_thms.append(k)
-                        continue
-
-                    for i in range(2, len(checkpoints)):
-                        if is_statement:
-                            if curr_idx >= len(formated_proof_text):
-                                print(f"OUT OF BOUND at {proof_path}: ")
-                                print(formated_proof_text)
-                                print('=' * 10)
-                                # print("\n".join(text_lines[checkpoints[0][0]:checkpoints[-1][0]]))
-                                new_thm_text = "".join(text_lines[v["def_ranges"][0]:v["proof_ranges"][2]])
-                                print(new_thm_text)
-                                continue
-                            proof_steps['text'] = formated_proof_text[curr_idx]
-
-                            id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
-                                                    uri=(proof_path).as_uri(),
-                                                    version=curr_version
-                                                    ), position=lsp_types.Position(line=checkpoints[i][0], character=max(checkpoints[i][1] - 1, 0))))
-                            goal = client.wait_for_response(id)
-                            proof_steps['goal_before'] = [each_g.ty for each_g in goal.result.goals.goals] if goal.result.goals else []
-                            proof_steps['proof_term_before'] = theorems[k]['proof_steps'][-1]['proof_term_after'] if len(theorems[k]['proof_steps']) else []
-                        else:
-                            id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
-                                                    uri=(proof_path).as_uri(),
-                                                    version=curr_version
-                                                    ), position=lsp_types.Position(line=checkpoints[i][0], character=max(checkpoints[i][1] - 1, 0))))
-                            proof_term = client.wait_for_response(id)
-                            proof_steps['goal_after'] = [each_g.ty for each_g in proof_term.result.goals.goals] if proof_term.result.goals else []
-                            proof_steps['proof_term_after'] = [each_m.text for each_m in proof_term.result.messages]
-                            theorems[k]['proof_steps'].append(proof_steps)
-                            proof_steps = {
-                                'text': None,
-                                'goal_before': None,
-                                'goal_after': None,
-                                'proof_term_before': None, 
-                                'proof_term_after': None, 
-                            }
-                            curr_idx += 1
-                        is_statement = not is_statement
-
-                for each in skipped_thms:
-                    theorems.pop(each)
 
                 for k,v in theorems.items():
                     thm_counts += 1
                     all_project_theorems.append(v)
+            else:
+                print(f'Timeout from {proof_path.name}')
 
 
             # print(f'Document Symbols: {document_symbols}')
@@ -825,5 +769,9 @@ if __name__ == '__main__':
     # argParser.add_argument("-s", "--start", type=int)
     # argParser.add_argument("-e", "--end", type=int)
     # args = argParser.parse_args()
-    # check_all_projects(Path('/home/jizej/proverbot9001/coq-projects/').expanduser(), args.start, args.end)
-    winston_coq_lsp()
+    # # check_all_projects(Path('/home/jizej/proverbot9001/coq-projects/').expanduser(), args.start, args.end)
+    # check_all_projects(Path('/home/jizej/proverbot9001/coq-projects/qarith-stern-brocot').expanduser(), args.start, args.end)
+    # winston_coq_lsp()
+
+    get_theorem_names_in_projects(Path('/home/jizej/proverbot9001/coq-projects/').expanduser())
+    # get_theorem_names_in_file(Path('/home/jizej/proverbot9001/coq-projects/float/MSB.v'))

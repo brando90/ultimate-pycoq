@@ -37,7 +37,7 @@ from pytp.coq.coq_types import ResponseErrorMessage, GoalRequest, GoalAnswer, Fl
 from pytp.coq.opam import create_opam_subprocess, opam_run
 from pytp.lsp_client import LSPClient, Id
 from pytp.lsp_config import LSPConfig
-from pytp.coq.converter import get_coq_lsp_convertefalser
+from pytp.coq.converter import get_coq_lsp_converter
 
 from pytp.coq.coq_lsp_client import CoqLSPClient, get_default_coq_lsp_config, get_extract_coq_lsp_config
 
@@ -545,7 +545,7 @@ def check_all_projects(project_root: Path, start=None, end=None):
                     text=file_text
                 )
             ))
-            document_symbols = client.wait_for_response(id, timeout=5)
+            document_symbols = client.wait_for_response(id, timeout=10)
             if not document_symbols:
                 print(f"Timtout at {proof_path.name}")
 
@@ -631,15 +631,23 @@ def check_all_projects(project_root: Path, start=None, end=None):
                                 proof_steps['text'] = format_proof_text(
                                     v['proof']).split('\n')[curr_idx]
 
+                                print(proof_steps['text'])
                                 id = client.proof_goals(params=GoalRequest(text_document=lsp_types.VersionedTextDocumentIdentifier(
                                                         uri=(
                                                             proof_path).as_uri(),
                                                         version=curr_version
                                                         ), position=lsp_types.Position(line=checkpoints[i][0], character=max(checkpoints[i][1] - 1, 0))))
-                                goal = client.wait_for_response(id, timeout=3)
+                                goal = client.wait_for_response(id, timeout=10)
                                 if goal is None:
+                                    print(f"Timeout at {proof_steps['text']}")
                                     skipped_thms.append(k)
+                                    client.cancel_request(lsp_types.CancelParams(id))
+                                    print(theorems[k]['augmented_proof'])
+                                    print(v['def_ranges'][0], v['proof_ranges'][2])
+                                    print(checkpoints[i][0], checkpoints[i][1] - 1)
+                                    print(''.join(text_lines[v["def_ranges"][0]:v["proof_ranges"][2]]))
                                     break
+                                # goal = client.wait_for_response(id)
                                 proof_steps['goal_before'] = [
                                     each_g.ty for each_g in goal.result.goals.goals] if goal.result.goals else []
                                 proof_steps['proof_term_before'] = theorems[k]['proof_steps'][-1]['proof_term_after'] if len(
@@ -653,11 +661,19 @@ def check_all_projects(project_root: Path, start=None, end=None):
                                                             proof_path).as_uri(),
                                                         version=curr_version
                                                         ), position=lsp_types.Position(line=checkpoints[i][0], character=max(checkpoints[i][1] - 1, 0))))
+                                print('show proof')
                                 proof_term = client.wait_for_response(
-                                    id, timeout=3)
+                                    id, timeout=10)
                                 if proof_term is None:
+                                    print('timeout')
                                     skipped_thms.append(k)
+                                    client.cancel_request(lsp_types.CancelParams(id))
+                                    print(theorems[k]['augmented_proof'])
+                                    print(v['def_ranges'][0], v['proof_ranges'][2])
+                                    print(checkpoints[i][0], checkpoints[i][1] - 1)
+                                    print(''.join(text_lines[v["def_ranges"][0]:v["proof_ranges"][2]]))
                                     break
+                                proof_term = client.wait_for_response(id)
                                 proof_steps['goal_after'] = [
                                     each_g.ty for each_g in proof_term.result.goals.goals] if proof_term.result.goals else []
                                 proof_steps['proof_term_after'] = [
@@ -683,11 +699,6 @@ def check_all_projects(project_root: Path, start=None, end=None):
                     thm_counts += 1
                     all_project_theorems.append(v)
 
-            # print(f'Document Symbols: {document_symbols}')
-            # print(f"Total num of theorems: {thm_counts}")
-            # print('=' * 10)
-
-        for proof_path in coq_scripts:
             client.text_document_did_close(params=lsp_types.DidCloseTextDocumentParams(
                 text_document=lsp_types.TextDocumentItem(
                     uri=(proof_path).as_uri(),
@@ -696,6 +707,13 @@ def check_all_projects(project_root: Path, start=None, end=None):
                     text=file_text
                 )
             ))
+
+            # print(f'Document Symbols: {document_symbols}')
+            # print(f"Total num of theorems: {thm_counts}")
+            # print('=' * 10)
+
+        # for proof_path in coq_scripts:
+        #     print('closing files')
 
         if success_project_file_counts == project_file_counts:
             success_project_counts += 1
@@ -750,6 +768,8 @@ def winston_coq_lsp():
     # new_workspace_path = Path('/home/jizej/proverbot9001/coq-projects/functions-in-zfc').expanduser()
     new_workspace_path = Path(
         '/home/jizej/proverbot9001/coq-projects/markov').expanduser()
+    new_workspace_path = Path(
+        '/home/jizej/proverbot9001/coq-projects/fcsl-pcm').expanduser()
 
     # change workspace folder
     client.workspace_did_change_workspace_folders(params=lsp_types.DidChangeWorkspaceFoldersParams(
@@ -768,7 +788,7 @@ def winston_coq_lsp():
     # proof_path = new_workspace_path / 'subseq.v'
     # proof_path = new_workspace_path / 'Subseq.v'
     # proof_path = new_workspace_path / 'Functions_in_ZFC.v'
-    proof_path = new_workspace_path / 'markov.v'
+    proof_path = new_workspace_path / 'pcm' / 'pcm.v'
     file_text, num_lines, text_lines = parse_proof_file(proof_path)
     print("===========")
     print(file_text)
@@ -932,9 +952,10 @@ def winston_coq_lsp():
 
 
 if __name__ == '__main__':
-    # argParser = argparse.ArgumentParser()
-    # argParser.add_argument("-s", "--start", type=int)
-    # argParser.add_argument("-e", "--end", type=int)
-    # args = argParser.parse_args()
-    # check_all_projects(Path('/home/jizej/proverbot9001/coq-projects/').expanduser(), args.start, args.end)
-    winston_coq_lsp()
+    argParser = argparse.ArgumentParser()
+    argParser.add_argument("-s", "--start", type=int)
+    argParser.add_argument("-e", "--end", type=int)
+    args = argParser.parse_args()
+    check_all_projects(Path('/home/jizej/proverbot9001/coq-projects/').expanduser(), args.start, args.end)
+    # check_all_projects(Path('/home/jizej/proverbot9001/coq-projects/qarith-stern-brocot').expanduser(), args.start, args.end)
+    # winston_coq_lsp()

@@ -112,14 +112,18 @@ class CoqLSPClient(LSPClient):
         self.document = ''
 
 
+        self.opened_files = {}
+        self.file_progress = -1
+
+
         # self.endpoint.register_notification_callback('$/logTrace', lambda notification: print(notification.params.message))
         # self.endpoint.register_notification_callback('window/logMessage', lambda notification: print(notification.params.message))
 
         def on_file_progress(notification: CoqFileProgressNotification):
             # start = notification.params.processing[0].range.start
-            # end = notification.params.processing[0].range.end
+            end = notification.params.processing[0].range.end.line
             # print(f'Processed {start.line}:{end.line}:')  # {self.document[start.offset:end.offset]}')
-            pass
+            self.file_progress = end
 
         self.endpoint.register_notification_callback('$/coq/fileProgress', on_file_progress)
 
@@ -145,6 +149,7 @@ class CoqLSPClient(LSPClient):
         """
         Notify the server that a text document has been opened.
         """
+        self.file_progress = -1
         self.document = params.text_document.text
         super().text_document_did_open(params)
 
@@ -152,6 +157,7 @@ class CoqLSPClient(LSPClient):
         """
         Notify the server that a text document has been changed.
         """
+        # self.file_progress = -1  # reset file progress
         self.document = params.content_changes[0].text
         super().text_document_did_change(params)
 
@@ -192,6 +198,14 @@ class CoqLSPClient(LSPClient):
         result is received. If `False`, the method will return the request's id.
         :return: The result of the request if `return_result` is `True`, otherwise the request's id.
         """
+        cnt = 0
+        while self.file_progress < params.position.line:
+            if cnt == 0:
+                print('Waiting for file progress...')
+                cnt += 1
+            elif cnt == 1:
+                print(self.file_progress)
+                pass
         return self.send_request('proof/goals', params=params, return_result=return_result)
 
     def coq_get_document(self, params: FlecheDocumentParams, return_result=False) -> Union[FlecheDocument, Id]:

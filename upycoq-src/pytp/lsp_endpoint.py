@@ -123,7 +123,6 @@ class LSPEndpoint(threading.Thread):
             raise ValueError(f'No request with id {id} has been sent.')
         self.response_events[id].wait(timeout=timeout)
         if id not in self._received_responses.keys():
-            print('Timeout from server')
             return None
         response = self._received_responses[id]
         if isinstance(response, self.error_type):
@@ -208,6 +207,10 @@ class LSPEndpoint(threading.Thread):
                         error_code = ErrorCodes(error.code).name
                     else:
                         error_code = error.code
+                    if error_code == 'RequestCancelled':
+                        self.server_did_error = False
+                        print('Request cancelled by client.')
+                        continue
                     raise Exception(
                         f'Error received from server with error code: {error_code}, message: {error.message}')
                 else:
